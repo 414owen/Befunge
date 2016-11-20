@@ -1,3 +1,4 @@
+From Wikipedia:
 
 0-9	Push this number on the stack
 +	Addition: Pop a and b, then push a+b
