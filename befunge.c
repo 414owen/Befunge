@@ -1,3 +1,11 @@
+/* ------------------------ */
+/* |                      | */
+/* |                      | */
+/* |      Befunge-93      | */
+/* |                      | */
+/* |                      | */
+/* ------------------------ */
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,10 +38,11 @@ struct Program* prog_from_stdin() {
 		}
 		int size = getline(&line, &zerop, stdin);
 		if (size < 0) {break;}
-		else {max_len = size;}
+		else if (max_len < size) {max_len = size;}
 		struct Bfline *b = malloc(sizeof(struct Bfline));
 		b->length = size;
 		b->line = line;
+		line = NULL;
 		prog[bflines++] = b;
 	}
 	struct Program* program = malloc(sizeof(struct Program));
@@ -44,7 +53,7 @@ struct Program* prog_from_stdin() {
 		struct Bfline* bfl = prog[i];
 		char* new_line = realloc(bfl->line, max_len);
 		program->lines[i] = new_line;
-		for (int j = 0; j < max_len - 1; j++) {
+		for (int j = bfl->length - 1; j < max_len - 1; j++) {
 			new_line[j] = ' ';
 		}
 		new_line[max_len - 1] = '\0';
@@ -57,19 +66,26 @@ void print_prog(struct Program* program) {
 	size_t width = program->width;
 	size_t height = program->height;
 	for (size_t j = 0; j < height; j++) {
-		/* for (size_t i = 0; i < width - 1; i++) { */
-		/*     printf("%c", program->lines[j][i]); */
-		/* } */
 		printf("%s\n", program->lines[j]);
+	}
+}
+
+bool run(struct Program* prog) {
+	size_t width = prog->width;
+	size_t height = prog->height;
+	char** lines = prog->lines;
+	int x = 0;
+	int y = 0;
+	while(true) {
+		char curr = lines[y][x];
+		
 	}
 }
 
 int main(int argc, char *argv[]) {
 	struct Program* program = prog_from_stdin();
-	printf("Program read.\nwidth: %d, height: %d\n", program->width, program->height);
+	printf("Program read\nwidth: %d, height: %d\n", program->width, program->height);
+	
 	print_prog(program);
 	return 0;
-
-	/* if (argc > 1) {program = prog_from_file(argv[1]);} */
-	/* else {program = prog_from_stdin();} */
 }
