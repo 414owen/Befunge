@@ -23,6 +23,10 @@ struct Program {
 	size_t height;
 };
 
+struct Stack {
+
+};
+
 struct Program* prog_from_stdin() {
 	size_t bflines = 0;
 	size_t line_buf = 100;
