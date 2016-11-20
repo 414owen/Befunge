@@ -2,44 +2,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define uint unsigned int
 
-char** prog_from_file(char* name) {
-	char** prog;
-	while (true) {
-	}
-	return *prog;
-}
-
-struct bfline {
+struct Bfline {
 	char* line;
-	int length;
-}
+	size_t length;
+};
 
-char** prog_from_stdin() {
-	int lines = 0;
-	int line_buf = 100;
-	bfline** prog = malloc(line_buf * sizeof(bfline));
+struct Program {
+	char** lines;
+	size_t width;
+	size_t height;
+};
+
+struct Program* prog_from_stdin() {
+	size_t bflines = 0;
+	size_t line_buf = 100;
+	struct Bfline** prog = malloc(line_buf * sizeof(struct Bfline));
 	size_t ind = 0;
-	char *line = NULL:
+	char *line = NULL;
 	size_t zerop = 0;
+	size_t max_len = 0;
 	while (true) {
-		if (lines == line_buf) {
+		if (bflines == line_buf) {
 			line_buf = line_buf * 2;
 			prog = realloc(prog, line_buf);
 		}
 		int size = getline(&line, &zerop, stdin);
-		if (size < 0) break;
-		bfline b;
-		b.line = length = size;
-		b.line = line;
-		prog[lines++] = 
+		if (size < 0) {break;}
+		else {max_len = size;}
+		struct Bfline *b = malloc(sizeof(struct Bfline));
+		b->length = size;
+		b->line = line;
+		prog[bflines++] = b;
 	}
-	return *prog;
+	struct Program* program = malloc(sizeof(struct Program));
+	program->lines = malloc(sizeof(char*) * bflines);
+	program->width = max_len;
+	program->height = bflines;
+	for (int i = 0; i < bflines; i++) {
+		struct Bfline* bfl = prog[i];
+		char* new_line = realloc(bfl->line, max_len);
+		program->lines[i] = new_line;
+		for (int j = 0; j < max_len - 1; j++) {
+			new_line[j] = ' ';
+		}
+		new_line[max_len - 1] = '\0';
+	}
+	free(prog);
+	return program;
+}
+
+void print_prog(struct Program* program) {
+	size_t width = program->width;
+	size_t height = program->height;
+	for (size_t j = 0; j < height; j++) {
+		/* for (size_t i = 0; i < width - 1; i++) { */
+		/*     printf("%c", program->lines[j][i]); */
+		/* } */
+		printf("%s\n", program->lines[j]);
+	}
 }
 
 int main(int argc, char *argv[]) {
-	char** program;
-	if (argc > 1) {program = befunge::prog_from_file(argv[1]);}
-	else {program = befunge::prog_from_stdin();}
-}
+	struct Program* program = prog_from_stdin();
+	printf("Program read.\nwidth: %d, height: %d\n", program->width, program->height);
+	print_prog(program);
+	return 0;
 
+	/* if (argc > 1) {program = prog_from_file(argv[1]);} */
+	/* else {program = prog_from_stdin();} */
+}
