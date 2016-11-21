@@ -28,40 +28,48 @@ struct Stack {
 	struct Stack* tail;
 };
 
-bool empty_stack(Stack* f) {
+bool empty_stack(struct Stack* f) {
 	return !f->tail;
 }
 
 // return head of list
-double car(Stack *f) {
+int car(struct Stack *f) {
 	return f->val;
 }
 
-Stack* free_head(Stack *f) {
-	Stack* new = f->tail;
+struct Stack* cdr(struct Stack* s) {
+	return s->tail;
+}
+
+struct Stack* free_head(struct Stack *f) {
+	struct Stack* new = f->tail;
 	free(f);
 	return new;
 }
 
-void free_all(Stack *d) {
-	while (!empty_stack_d(d)) {
-		d = free_head_d(d);
+void free_all(struct Stack *d) {
+	while (!empty_stack(d)) {
+		d = free_head(d);
 	}
-	free_head_d(d);
+	free_head(d);
 }
 
 // Add element to head of list
-Stack* cons(Stack *f, double t) {
-	Stack *result = malloc(sizeof(Stack));
+struct Stack* cons(struct Stack *f, int t) {
+	struct Stack *result = malloc(sizeof(struct Stack));
 	result->val = t;
 	result->tail = f;
 	return result;
 }
 
-Stack* new_stack() {
-	Stack *result = malloc(sizeof(Stack));
+struct Stack* new_stack() {
+	struct Stack *result = malloc(sizeof(struct Stack));
 	result->tail = NULL;
 	return result;
+}
+
+void replace(struct Stack* s, int val) {
+	s->val = val;
 }
 
 struct Program* prog_from_stdin() {
@@ -118,26 +126,198 @@ bool run(struct Program* prog) {
 	char** lines = prog->lines;
 	int x = 0;
 	int y = 0;
+	int dx = 1;
+	int dy = 0;
 	struct Stack* stack = new_stack();
+	bool string_mode = false;
 	while(true) {
 		char curr = lines[y][x];
-		if (curr >= '0' && curr <= '9') {
-			cons(stack, curr - '0');
+		if (string_mode) {
+			if (curr == '"') {
+				string_mode = false;
+			} else {
+				stack = cons(stack, curr);
+			}
 		} else {
-			switch(curr) {
-				case '@':
-					return true;
-					break;
-				case 
+			if (curr >= '0' && curr <= '9') {
+				stack = cons(stack, curr - '0');
+			} else {
+				switch(curr) {
+					case '@':
+						return true;
+					case '+': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  replace(stack, a + car(stack));
+								  break;
+							  }
+					case '-': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  replace(stack, a - car(stack));
+								  break;
+							  }
+					case '*': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  replace(stack, a * car(stack));
+								  break;
+							  }
+					case '/': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  replace(stack, a / car(stack));
+								  break;
+							  }
+					case '%': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  replace(stack, a % car(stack));
+								  break;
+							  }
+					case '!': {
+								  int a = car(stack);
+								  replace(stack, !a == 0);
+								  break;
+							  }
+					case '`': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  replace(stack, a < car(stack));
+								  break;
+							  }
+					case '<': {
+								  dx = -1;
+								  dy = 0;
+								  break;
+							  }
+					case '>': {
+								  dx = 1;
+								  dy = 0;
+								  break;
+							  }
+					case '^': {
+								  dy = -1;
+								  dx = 0;
+								  break;
+							  }
+					case 'v': {
+								  dx = 0;
+								  dy = 1;
+								  break;
+							  }
+					case '?': {
+								  int dir = rand() % 4;
+								  switch(dir) {
+									  case 0:
+										  dx = 0;
+										  dy = 1;
+										  break;
+									  case 1:
+										  dx = 0;
+										  dy = -1;
+										  break;
+									  case 2:
+										  dx = 1;
+										  dy = 0;
+										  break;
+									  case 3:
+										  dx = -1;
+										  dy = 0;
+										  break;
+								  }
+								  break;
+							  }
+					case '_': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  if (a) {dx = -1;} 
+								  else {dx = 1;}
+								  dy = 0;
+								  break;
+							  }
+					case '|': {
+								  int a = car(stack);
+								  stack = free_head(stack);
+								  if (a) {dy = -1;} 
+								  else {dy = 1;}
+								  dx = 0;
+								  break;
+							  }
+					case '"': {
+								  string_mode = !string_mode;
+								  break;
+							  }
+					case ':': {
+								  stack = cons(stack, car(stack));
+								  break;
+							  }
+					case '\\': {
+								   struct Stack* stack_two = cdr(stack);
+								   int tmp = car(stack);
+								   replace(stack, car(stack_two));
+								   replace(stack_two, tmp);
+								   break;
+							   }
+					case '.': {
+								  printf("%d ", car(stack));
+								  stack = free_head(stack);
+								  break;
+							  }
+					case ',': {
+								  printf("%c", car(stack));
+								  stack = free_head(stack);
+								  break;
+							  }
+					case '#': {
+								  x += dx;
+								  y += dy;
+								  break;
+							  }
+					case 'p': {
+								  int y = car(stack);
+								  stack = free_head(stack);
+								  int x = car(stack);
+								  stack = free_head(stack);
+								  int v = car(stack);
+								  stack = free_head(stack);
+								  lines[y][x] = v;
+								  break;
+							  }
+					case 'g': {
+								  int y = car(stack);
+								  stack = free_head(stack);
+								  int x = car(stack);
+								  stack = free_head(stack);
+								  stack = cons(stack, lines[y][x]);
+								  break;
+							  }
+					case '&': {
+								  printf("\nPlease input a number: ");
+								  fflush(stdout);
+								  int num;
+								  scanf("%d", &num);
+								  stack = cons(stack, num);
+								  break;
+							  }
+					case '~': {
+								  printf("\nPlease input a character: ");
+								  int a = getchar();
+								  stack = cons(stack, a);
+								  break;
+							  }
+				}
 			}
 		}
+		x = (x + dx) % width;
+		y = (y + dy) % height;
 	}
 }
 
 int main(int argc, char *argv[]) {
 	struct Program* program = prog_from_stdin();
 	printf("Program read\nwidth: %d, height: %d\n", program->width, program->height);
-	
 	print_prog(program);
+	run(program);
 	return 0;
 }
