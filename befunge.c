@@ -11,6 +11,17 @@
 #include <stdlib.h>
 #include <string.h>
 #define uint unsigned int
+#define lambda(return_type, function_body) \
+	({ \
+	 return_type __fn__ function_body \
+	 __fn__; \
+	 })
+
+#ifdef DEVEL 
+#define dprintf(format, ...) fprintf (stderr, format, __VA_ARGS__)
+#else
+#define dprintf(format, ...) 
+#endif
 
 struct Bfline {
 	char* line;
@@ -38,13 +49,18 @@ int car(struct Stack *f) {
 }
 
 struct Stack* cdr(struct Stack* s) {
-	return s->tail;
+	if (s->tail) {return s->tail;}
+	else {return s;}
 }
 
 struct Stack* free_head(struct Stack *f) {
-	struct Stack* new = f->tail;
-	free(f);
-	return new;
+	if (f->tail) {
+		struct Stack* new = f->tail;
+		free(f);
+		return new;
+	} else {
+		return f;
+	}
 }
 
 void free_all(struct Stack *d) {
@@ -120,6 +136,20 @@ void print_prog(struct Program* program) {
 	}
 }
 
+void arithmetic(struct Stack* stack, int (*func)(int, int)) {
+	if (empty_stack(stack)) {
+		stack = cons(stack, 0);
+	} else {
+		int a = car(stack);
+		stack = free_head(stack);
+		if (empty_stack(stack)) {
+			stack = cons(stack, 0);
+		} else {
+			replace(stack, func(a, car(stack)));
+		}
+	}
+}
+
 bool run(struct Program* prog) {
 	size_t width = prog->width;
 	size_t height = prog->height;
@@ -129,9 +159,11 @@ bool run(struct Program* prog) {
 	int dx = 1;
 	int dy = 0;
 	struct Stack* stack = new_stack();
+	stack->val = 0;
 	bool string_mode = false;
 	while(true) {
 		char curr = lines[y][x];
+		dprintf("%c", curr);
 		if (string_mode) {
 			if (curr == '"') {
 				string_mode = false;
@@ -146,10 +178,9 @@ bool run(struct Program* prog) {
 					case '@':
 						return true;
 					case '+': {
-								  int a = car(stack);
-								  stack = free_head(stack);
-								  replace(stack, a + car(stack));
+								  arithmetic(stack, lambda(int, (int a, int b) {return a+b;}));
 								  break;
+
 							  }
 					case '-': {
 								  int a = car(stack);
@@ -230,6 +261,7 @@ bool run(struct Program* prog) {
 							  }
 					case '_': {
 								  int a = car(stack);
+								  dprintf("%d", a);
 								  stack = free_head(stack);
 								  if (a) {dx = -1;} 
 								  else {dx = 1;}
@@ -249,7 +281,9 @@ bool run(struct Program* prog) {
 								  break;
 							  }
 					case ':': {
-								  stack = cons(stack, car(stack));
+								  if (!empty_stack(stack)) {
+									  stack = cons(stack, car(stack));
+								  }
 								  break;
 							  }
 					case '\\': {
