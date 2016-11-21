@@ -24,8 +24,45 @@ struct Program {
 };
 
 struct Stack {
-
+	int val;
+	struct Stack* tail;
 };
+
+bool empty_stack(Stack* f) {
+	return !f->tail;
+}
+
+// return head of list
+double car(Stack *f) {
+	return f->val;
+}
+
+Stack* free_head(Stack *f) {
+	Stack* new = f->tail;
+	free(f);
+	return new;
+}
+
+void free_all(Stack *d) {
+	while (!empty_stack_d(d)) {
+		d = free_head_d(d);
+	}
+	free_head_d(d);
+}
+
+// Add element to head of list
+Stack* cons(Stack *f, double t) {
+	Stack *result = malloc(sizeof(Stack));
+	result->val = t;
+	result->tail = f;
+	return result;
+}
+
+Stack* new_stack() {
+	Stack *result = malloc(sizeof(Stack));
+	result->tail = NULL;
+	return result;
+}
 
 struct Program* prog_from_stdin() {
 	size_t bflines = 0;
@@ -61,6 +98,7 @@ struct Program* prog_from_stdin() {
 			new_line[j] = ' ';
 		}
 		new_line[max_len - 1] = '\0';
+		free(bfl);
 	}
 	free(prog);
 	return program;
@@ -80,9 +118,19 @@ bool run(struct Program* prog) {
 	char** lines = prog->lines;
 	int x = 0;
 	int y = 0;
+	struct Stack* stack = new_stack();
 	while(true) {
 		char curr = lines[y][x];
-		
+		if (curr >= '0' && curr <= '9') {
+			cons(stack, curr - '0');
+		} else {
+			switch(curr) {
+				case '@':
+					return true;
+					break;
+				case 
+			}
+		}
 	}
 }
 
