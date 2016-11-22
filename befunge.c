@@ -11,11 +11,19 @@
 #include <stdlib.h>
 #include <string.h>
 #define uint unsigned int
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+// #define DEVEL
 
 #ifdef DEVEL 
-#define dprintf(format, ...) fprintf (stderr, format, __VA_ARGS__)
+#define dprintf(...) fprintf (stderr, __VA_ARGS__)
 #else
-#define dprintf(format, ...) 
+#define dprintf(...) 
 #endif
 
 struct Bfline {
@@ -125,6 +133,31 @@ void print_prog(struct Program* program) {
 	}
 }
 
+void print_prog_with_pointer(char** lines, int width, int height, int x, int y) {
+	for (size_t j = 0; j < y; j++) {
+		for (size_t i = 0; i < width; i++) {
+			dprintf("%c", lines[j][i]);
+		}
+		dprintf("\n");
+	}
+	for (size_t i = 0; i < x; i++) {
+		dprintf("%c", lines[y][i]);
+	}
+	dprintf(ANSI_COLOR_RED "X" ANSI_COLOR_RESET);
+	for (size_t i = x + 1; i < width; i++) {
+		dprintf("%c", lines[y][i]);
+	}
+	dprintf("\n");
+	for (size_t j = y + 1; j < height; j++) {
+		for (size_t i = 0; i < width; i++) {
+			dprintf("%c", lines[j][i]);
+		}
+		dprintf("\n");
+	}
+
+	dprintf("\n");
+}
+
 bool run(struct Program* prog) {
 	size_t width = prog->width;
 	size_t height = prog->height;
@@ -138,7 +171,9 @@ bool run(struct Program* prog) {
 	bool string_mode = false;
 	while(true) {
 		char curr = lines[y][x];
-		dprintf("%c %d ", curr, car(stack));
+#ifdef DEVEL
+		print_prog_with_pointer(lines, width, height, x, y);
+#endif
 		if (string_mode) {
 			if (curr == '"') {
 				string_mode = false;
@@ -317,7 +352,6 @@ bool run(struct Program* prog) {
 								  break;
 							  }
 					case '&': {
-								  fflush(stdout);
 								  int num;
 								  scanf("%d", &num);
 								  stack = cons(stack, num);
