@@ -390,8 +390,6 @@ bool run(struct Program* prog) {
 		}
 		x = (x + dx) % width;
 		y = (y + dy) % height;
-		/* if (x < 0) {x = width + x;} */
-		/* if (y < 0) {y = height + y;} */
 	}
 }
 
