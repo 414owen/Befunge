@@ -1,5 +1,5 @@
 release: befunge.c
-	gcc -O2 -o befunge befunge.c
+	gcc -O3 -o befunge befunge.c
 
 devel: befunge.c
 	gcc -g -o befunge befunge.c
