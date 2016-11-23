@@ -83,27 +83,36 @@ struct Stack* new_stack() {
 	return result;
 }
 
+// "Classic Premature Optimisation" - Brian Whelan (BAmod pending)
+// "Shut up I wanna" - me
 struct Program* prog_from_file(char* filename) {
 	size_t bflines = 0;
 	size_t line_buf = 100;
-	size_t prog_size = sizeof(char) * WIDTH * HEIGHT + 2;
+	size_t prog_size = sizeof(char) * WIDTH * HEIGHT;
 	char* prog = malloc(prog_size); // + 2 is for '\n' and '\0' from fgets
 	size_t max_len = 0;
 	FILE* file = fopen(filename, "r");
+	struct Program* program = malloc(sizeof(struct Program));
 	for (int j = 0; j < HEIGHT; j++) {
 		char* linep = prog + j * sizeof(char) * WIDTH;
-		fgets(linep, WIDTH + 2, file);
-		if (feof(file)) {break;}
-		int line_len = WIDTH + 1;
+		int line_len = 0;
 		while (true) {
-			char prev = *(linep + line_len);
-			*(linep + line_len) = ' ';
-			if (prev == '\0') {break;}
+			line_len++;
+			int curr = fgetc(file);
+			if (curr == '\n') {
+				bflines++;
+				max_len = max_len > line_len ? max_len : line_len;
+				for (char* i = linep + line_len; i < WIDTH + linep; i++) {
+					*i = ' ';
+				}
+				break;
+			} else if (curr == EOF) {
+				max_len = max_len > line_len ? max_len : line_len;
+				goto fileEnd;
+			} else {*(linep + line_len) = (char) curr;}
 		}
-		if (line_len > max_len) {max_len = line_len;}
-		bflines++;
 	}
-	struct Program* program = malloc(sizeof(struct Program));
+fileEnd:	
 	program->lines = prog;
 	program->width = max_len;
 	program->height = bflines;
@@ -148,8 +157,8 @@ void out_of_bounds(int x, int y) {
 }
 
 bool run(struct Program* prog) {
-	size_t width = prog->width;
-	size_t height = prog->height;
+	int width = prog->width;
+	int height = prog->height;
 	char* program = prog->lines;
 	int x = 0;
 	int y = 0;
