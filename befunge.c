@@ -97,7 +97,6 @@ struct Program* prog_from_file(char* filename) {
 		char* linep = prog + j * sizeof(char) * WIDTH;
 		int line_len = 0;
 		while (true) {
-			line_len++;
 			int curr = fgetc(file);
 			if (curr == '\n') {
 				bflines++;
@@ -109,7 +108,7 @@ struct Program* prog_from_file(char* filename) {
 			} else if (curr == EOF) {
 				max_len = max_len > line_len ? max_len : line_len;
 				goto fileEnd;
-			} else {*(linep + line_len) = (char) curr;}
+			} else {*(linep + line_len++) = (char) curr;}
 		}
 	}
 fileEnd:	
@@ -397,8 +396,8 @@ bool run(struct Program* prog) {
 				}
 			}
 		}
-		x = (x + dx) % width;
-		y = (y + dy) % height;
+		x = (width  + x + dx) % width;
+		y = (height + y + dy) % height;
 	}
 }
 
