@@ -29,6 +29,16 @@
 #define dprintf(...) 
 #endif
 
+/* ---------- */
+/* |  TODO  | */
+/* ---------- */
+ 
+// * Determine whether file supplied is a folder before proceeding
+// * Decompile switch-statement, see if we benefit from manual character
+// binary-search (log(n)), or an array of funtion pointers (n, but has more
+// overhead).
+
+
 struct Program {
 	bool valid;
 	size_t width;
@@ -369,12 +379,12 @@ bool run(struct Program* prog) {
 							stack = cdr(stack);
 							int v = car(stack);
 							stack = cdr(stack);
-							if (xx >= WIDTH || x < 0 || y >= HEIGHT || y < 0) {
-								out_of_bounds(x, y);
+							if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0) {
+								out_of_bounds(xx, yy);
 							}
 							width = width > xx ? width : xx;
 							height = height > yy ? height : yy;
-							*(program + sizeof(char) * (y * WIDTH + x)) = v;
+							*(program + sizeof(char) * (yy * WIDTH + xx)) = v;
 							break;
 						}
 					case 'g': 
@@ -383,10 +393,10 @@ bool run(struct Program* prog) {
 							stack = cdr(stack);
 							int xx = car(stack);
 							stack = cdr(stack);
-							if (xx >= WIDTH || x < 0 || y >= HEIGHT || y < 0) {
-								out_of_bounds(x, y);
+							if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0) {
+								out_of_bounds(xx, yy);
 							}
-							stack = cons(stack, *(program + sizeof(char) * (y * WIDTH + x)));
+							stack = cons(stack, *(program + sizeof(char) * (yy * WIDTH + xx)));
 							break;
 						}
 					case '&': 
