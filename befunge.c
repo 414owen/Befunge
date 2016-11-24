@@ -30,6 +30,7 @@
 #endif
 
 struct Program {
+	bool valid;
 	size_t width;
 	size_t height;
 	char* lines;
@@ -83,16 +84,25 @@ struct Stack* new_stack() {
 	return result;
 }
 
+void invalid_file() {
+	printf("Couldn't open file. Did you get the path right?\n");
+}
+
 // "Classic Premature Optimisation" - Brian Whelan (BAmod pending)
 // "Shut up I wanna" - me
 struct Program* prog_from_file(char* filename) {
+	FILE* file = fopen(filename, "r");
+	struct Program* program = malloc(sizeof(struct Program));
+	if (file == NULL) {
+		invalid_file();
+		program->valid = false;
+		return program;
+	}
 	size_t bflines = 0;
 	size_t line_buf = 100;
 	size_t prog_size = sizeof(char) * WIDTH * HEIGHT;
 	char* prog = malloc(prog_size); // + 2 is for '\n' and '\0' from fgets
 	size_t max_len = 0;
-	FILE* file = fopen(filename, "r");
-	struct Program* program = malloc(sizeof(struct Program));
 	for (int j = 0; j < HEIGHT; j++) {
 		char* linep = prog + j * sizeof(char) * WIDTH;
 		int line_len = 0;
@@ -113,6 +123,7 @@ struct Program* prog_from_file(char* filename) {
 	}
 fileEnd:	
 	program->lines = prog;
+	program->valid = true;
 	program->width = max_len;
 	program->height = bflines;
 	return program;
@@ -166,7 +177,7 @@ bool run(struct Program* prog) {
 	struct Stack* stack = new_stack();
 	bool string_mode = false;
 	while(true) {
-		char curr = program[sizeof(char) * (y * WIDTH + x)];
+		char curr = *(program + sizeof(char) * (y * WIDTH + x));
 #ifdef DEVEL
 		print_prog_with_pointer(lines, width, height, x, y);
 #endif
@@ -363,7 +374,7 @@ bool run(struct Program* prog) {
 							}
 							width = width > xx ? width : xx;
 							height = height > yy ? height : yy;
-							program[sizeof(char) * (y * WIDTH + x)] = v;
+							*(program + sizeof(char) * (y * WIDTH + x)) = v;
 							break;
 						}
 					case 'g': 
@@ -375,7 +386,7 @@ bool run(struct Program* prog) {
 							if (xx >= WIDTH || x < 0 || y >= HEIGHT || y < 0) {
 								out_of_bounds(x, y);
 							}
-							stack = cons(stack, program[sizeof(char) * (y * WIDTH + x)]);
+							stack = cons(stack, *(program + sizeof(char) * (y * WIDTH + x)));
 							break;
 						}
 					case '&': 
@@ -401,11 +412,22 @@ bool run(struct Program* prog) {
 	}
 }
 
+void usage(char* launch) {
+	printf("Usage: %s [FILE]\nThis runs the befunge program in [FILE]\n", launch);
+}
+
 int main(int argc, char *argv[]) {
 	srand(time(0));
+	if (argc != 2) {
+		usage(argv[0]); 
+		return 0;
+	}
 	struct Program* program = prog_from_file(argv[1]);
-	printf("Program read\nwidth: %d, height: %d\n", program->width, program->height);
+	// printf("Program read\nwidth: %d, height: %d\n", program->width, program->height);
 	// print_prog(program);
-	run(program);
+	if (program->valid) {
+		run(program);
+	} 
 	return 0;
 }
+
