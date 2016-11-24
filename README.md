@@ -4,8 +4,8 @@ This is quite a fast interpreter for [Befunge-93](https://en.wikipedia.org/wiki/
 
 ## State
 
-Approximately 90% compatability. Most programs I've found run perfectly, but  
-some misbehave. I'm debugging, slowly but surely.
+100% compliance with the Befunge-93 specifications, however there are still
+some optimizations to be done.
 
 ## How to build:
 
