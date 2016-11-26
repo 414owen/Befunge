@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 // #define DEVEL
+#define STACK_TYPE int
 #define uint unsigned int
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -23,10 +24,10 @@
 #define WIDTH 80
 #define HEIGHT 25
 #define binary_op(__op__) \
-	int __a__ = car(stack);\
+	STACK_TYPE __a__ = car(stack);\
 stack = cdr(stack);\
-int __b__ = car(stack);\
-int __new_val__ = __b__ __op__ __a__;\
+STACK_TYPE __b__ = car(stack);\
+STACK_TYPE __new_val__ = __b__ __op__ __a__;\
 if (!empty_stack(stack)) stack->val = __new_val__;\
 else {\
 	stack = cdr(stack);\
@@ -57,7 +58,7 @@ struct Program {
 };
 
 struct Stack {
-	int val;
+	STACK_TYPE val;
 	struct Stack* tail;
 };
 
@@ -66,7 +67,7 @@ bool empty_stack(struct Stack* f) {
 }
 
 // return head of list
-int car(struct Stack *s) {
+STACK_TYPE car(struct Stack *s) {
 	if (empty_stack(s)) {
 		return 0;
 	} else {
@@ -202,7 +203,7 @@ void run(struct Program* prog) {
 					case '`': {binary_op(>); break;}
 					case '!': 
 							  {
-								  int a = car(stack);
+								  STACK_TYPE a = car(stack);
 								  stack = cdr(stack);
 								  stack = cons(stack, a == 0);
 								  break;
@@ -256,7 +257,7 @@ void run(struct Program* prog) {
 							  }
 					case '_': 
 							  {
-								  int a = car(stack);
+								  STACK_TYPE a = car(stack);
 								  stack = cdr(stack);
 								  if (a) {dx = -1;} 
 								  else {dx = 1;}
@@ -265,7 +266,7 @@ void run(struct Program* prog) {
 							  }
 					case '|': 
 							  {
-								  int a = car(stack);
+								  STACK_TYPE a = car(stack);
 								  stack = cdr(stack);
 								  if (a) {dy = -1;} 
 								  else {dy = 1;}
@@ -284,9 +285,9 @@ void run(struct Program* prog) {
 							  }
 					case '\\': 
 							  {
-								  int a = car(stack);
+								  STACK_TYPE a = car(stack);
 								  stack = cdr(stack);
-								  int b = car(stack);
+								  STACK_TYPE b = car(stack);
 								  stack = cdr(stack);
 								  stack = cons(stack, a);
 								  stack = cons(stack, b);
@@ -317,11 +318,11 @@ void run(struct Program* prog) {
 							  }
 					case 'p': 
 							  {
-								  int yy = car(stack);
+								  STACK_TYPE yy = car(stack);
 								  stack = cdr(stack);
-								  int xx = car(stack);
+								  STACK_TYPE xx = car(stack);
 								  stack = cdr(stack);
-								  int v = car(stack);
+								  STACK_TYPE v = car(stack);
 								  stack = cdr(stack);
 								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 									  out_of_bounds(xx, yy);
@@ -332,13 +333,13 @@ void run(struct Program* prog) {
 							  }
 					case 'g': 
 							  {
-								  int yy = car(stack);
+								  STACK_TYPE yy = car(stack);
 								  stack = cdr(stack);
-								  int xx = car(stack);
+								  STACK_TYPE xx = car(stack);
 								  stack = cdr(stack);
 								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 									  out_of_bounds(xx, yy);
-								  stack = cons(stack, *(program +  (yy * WIDTH + xx)));
+								  stack = cons(stack, (unsigned char) *(program +  (yy * WIDTH + xx)));
 								  break;
 							  }
 					case '&': 
