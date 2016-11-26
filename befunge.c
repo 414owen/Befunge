@@ -1,4 +1,4 @@
-/* ------------------------ */
+/* ------------------------ /
 /* |                      | */
 /* |                      | */
 /* |      Befunge-93      | */
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+// #define DEVEL
 #define uint unsigned int
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -21,7 +22,16 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 #define WIDTH 80
 #define HEIGHT 25
-// #define DEVEL
+#define binary_op(__op__) \
+	int __a__ = car(stack);\
+stack = cdr(stack);\
+int __b__ = car(stack);\
+int __new_val__ = __b__ __op__ __a__;\
+if (!empty_stack(stack)) stack->val = __new_val__;\
+else {\
+	stack = cdr(stack);\
+	stack = cons(stack, __new_val__);\
+}
 
 #ifdef DEVEL 
 #define dprintf(...) fprintf (stderr, __VA_ARGS__)
@@ -32,7 +42,7 @@
 /* ---------- */
 /* |  TODO  | */
 /* ---------- */
- 
+
 // * Determine whether file supplied is a folder before proceeding
 // * Decompile switch-statement, see if we benefit from manual character
 // binary-search (log(n)), or an array of funtion pointers (n, but has more
@@ -110,11 +120,11 @@ struct Program* prog_from_file(char* filename) {
 	}
 	size_t bflines = 0;
 	size_t line_buf = 100;
-	size_t prog_size = sizeof(char) * WIDTH * HEIGHT;
+	size_t prog_size = WIDTH * HEIGHT;
 	char* prog = malloc(prog_size); // + 2 is for '\n' and '\0' from fgets
 	size_t max_len = 0;
-	for (int j = 0; j < HEIGHT; j++) {
-		char* linep = prog + j * sizeof(char) * WIDTH;
+	while (true) {
+		char* linep = prog + bflines * WIDTH;
 		int line_len = 0;
 		while (true) {
 			int curr = fgetc(file);
@@ -139,36 +149,18 @@ fileEnd:
 	return program;
 }
 
-void print_prog(struct Program* program) {
-	size_t width = program->width;
-	size_t height = program->height;
-	for (size_t j = 0; j < height; j++) {
-		printf("%s\n", program->lines[j]);
-	}
-}
-
-void print_prog_with_pointer(char* line, int width, int height, int x, int y) {
-	for (size_t j = 0; j < y; j++) {
-		for (size_t i = 0; i < width; i++) {
-			dprintf("%c", lines[j][i]);
+void print_prog_with_pointer(char* program, int width, int height, int x, int y) {
+	for (int j = 0; j < height; j++) {
+		int linep = (WIDTH * j);
+		for (int i = 0; i < width; i++) {
+			if (y == j && x == i) {
+				dprintf(ANSI_COLOR_GREEN "X" ANSI_COLOR_RESET);
+			} else {
+				dprintf("%c", *(program + (linep + i)));
+			}
 		}
 		dprintf("\n");
 	}
-	for (size_t i = 0; i < x; i++) {
-		dprintf("%c", lines[y][i]);
-	}
-	dprintf(ANSI_COLOR_RED "X" ANSI_COLOR_RESET);
-	for (size_t i = x + 1; i < width; i++) {
-		dprintf("%c", lines[y][i]);
-	}
-	dprintf("\n");
-	for (size_t j = y + 1; j < height; j++) {
-		for (size_t i = 0; i < width; i++) {
-			dprintf("%c", lines[j][i]);
-		}
-		dprintf("\n");
-	}
-
 	dprintf("\n");
 }
 
@@ -176,7 +168,7 @@ void out_of_bounds(int x, int y) {
 	printf("Program limits are 80 x 25, tried to access %d x %d", x, y);
 }
 
-bool run(struct Program* prog) {
+void run(struct Program* prog) {
 	int width = prog->width;
 	int height = prog->height;
 	char* program = prog->lines;
@@ -187,9 +179,9 @@ bool run(struct Program* prog) {
 	struct Stack* stack = new_stack();
 	bool string_mode = false;
 	while(true) {
-		char curr = *(program + sizeof(char) * (y * WIDTH + x));
+		char curr = *(program +  (y * WIDTH + x));
 #ifdef DEVEL
-		print_prog_with_pointer(lines, width, height, x, y);
+		print_prog_with_pointer(program, width, height, x, y);
 #endif
 		if (string_mode) {
 			if (curr == '"') {
@@ -202,218 +194,168 @@ bool run(struct Program* prog) {
 				stack = cons(stack, curr - '0');
 			} else {
 				switch(curr) {
-					case '+': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							int b = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, a + b);
-							break;
-						}
-					case '-': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							int b = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, b - a);
-							break;
-						}
-					case '*': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							int b = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, a * b);
-							break;
-						}
-					case '/': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							int b = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, b / a);
-							break;
-						}
-					case '%': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							int b = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, b % a);
-							break;
-						}
+					case '+': {binary_op(+); break;}
+					case '-': {binary_op(-); break;}
+					case '*': {binary_op(*); break;}
+					case '/': {binary_op(/); break;}
+					case '%': {binary_op(%); break;}
+					case '`': {binary_op(>); break;}
 					case '!': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, a == 0);
-							break;
-						}
-					case '`': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							int b = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, b > a);
-							break;
-						}
+							  {
+								  int a = car(stack);
+								  stack = cdr(stack);
+								  stack = cons(stack, a == 0);
+								  break;
+							  }
 					case '<': 
-						{
-							dx = -1;
-							dy = 0;
-							break;
-						}
+							  {
+								  dx = -1;
+								  dy = 0;
+								  break;
+							  }
 					case '>': 
-						{
-							dx = 1;
-							dy = 0;
-							break;
-						}
+							  {
+								  dx = 1;
+								  dy = 0;
+								  break;
+							  }
 					case '^': 
-						{
-							dy = -1;
-							dx = 0;
-							break;
-						}
+							  {
+								  dy = -1;
+								  dx = 0;
+								  break;
+							  }
 					case 'v': 
-						{
-							dx = 0;
-							dy = 1;
-							break;
-						}
+							  {
+								  dx = 0;
+								  dy = 1;
+								  break;
+							  }
 					case '?': 
-						{
-							int dir = rand() % 4;
-							switch(dir) {
-								case 0:
-									dx = 0;
-									dy = 1;
-									break;
-								case 1:
-									dx = 0;
-									dy = -1;
-									break;
-								case 2:
-									dx = 1;
-									dy = 0;
-									break;
-								case 3:
-									dx = -1;
-									dy = 0;
-									break;
-							}
-							break;
-						}
+							  {
+								  int dir = rand() % 4;
+								  switch(dir) {
+									  case 0:
+										  dx = 0;
+										  dy = 1;
+										  break;
+									  case 1:
+										  dx = 0;
+										  dy = -1;
+										  break;
+									  case 2:
+										  dx = 1;
+										  dy = 0;
+										  break;
+									  case 3:
+										  dx = -1;
+										  dy = 0;
+										  break;
+								  }
+								  break;
+							  }
 					case '_': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							if (a) {dx = -1;} 
-							else {dx = 1;}
-							dy = 0;
-							break;
-						}
+							  {
+								  int a = car(stack);
+								  stack = cdr(stack);
+								  if (a) {dx = -1;} 
+								  else {dx = 1;}
+								  dy = 0;
+								  break;
+							  }
 					case '|': 
-						{
-							int a = car(stack);
-							stack = cdr(stack);
-							if (a) {dy = -1;} 
-							else {dy = 1;}
-							dx = 0;
-							break;
-						}
+							  {
+								  int a = car(stack);
+								  stack = cdr(stack);
+								  if (a) {dy = -1;} 
+								  else {dy = 1;}
+								  dx = 0;
+								  break;
+							  }
 					case '"': 
-						{
-							string_mode = !string_mode;
-							break;
-						}
+							  {
+								  string_mode = !string_mode;
+								  break;
+							  }
 					case ':': 
-						{
-							stack = cons(stack, car(stack));
-							break;
-						}
+							  {
+								  stack = cons(stack, car(stack));
+								  break;
+							  }
 					case '\\': 
-						{
-							int valt = car(stack);
-							stack = cdr(stack);
-							int valb = car(stack);
-							stack = cdr(stack);
-							stack = cons(stack, valt);
-							stack = cons(stack, valb);
-							break;
-						}
+							  {
+								  int a = car(stack);
+								  stack = cdr(stack);
+								  int b = car(stack);
+								  stack = cdr(stack);
+								  stack = cons(stack, a);
+								  stack = cons(stack, b);
+								  break;
+							  }
 					case '$': 
-						{
-							stack = cdr(stack);
-							break;
-						}
+							  {
+								  stack = cdr(stack);
+								  break;
+							  }
 					case '.': 
-						{
-							printf("%d ", car(stack));
-							stack = cdr(stack);
-							break;
-						}
+							  {
+								  printf("%d ", car(stack));
+								  stack = cdr(stack);
+								  break;
+							  }
 					case ',': 
-						{
-							printf("%c", car(stack));
-							stack = cdr(stack);
-							break;
-						}
+							  {
+								  putchar(car(stack));
+								  stack = cdr(stack);
+								  break;
+							  }
 					case '#': 
-						{
-							x += dx;
-							y += dy;
-							break;
-						}
+							  {
+								  x += dx;
+								  y += dy;
+								  break;
+							  }
 					case 'p': 
-						{
-							int yy = car(stack);
-							stack = cdr(stack);
-							int xx = car(stack);
-							stack = cdr(stack);
-							int v = car(stack);
-							stack = cdr(stack);
-							if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0) {
-								out_of_bounds(xx, yy);
-							}
-							width = width > xx ? width : xx;
-							height = height > yy ? height : yy;
-							*(program + sizeof(char) * (yy * WIDTH + xx)) = v;
-							break;
-						}
+							  {
+								  int yy = car(stack);
+								  stack = cdr(stack);
+								  int xx = car(stack);
+								  stack = cdr(stack);
+								  int v = car(stack);
+								  stack = cdr(stack);
+								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
+									  out_of_bounds(xx, yy);
+								  if (width < xx) width = xx;
+								  if (height < yy) height = yy;
+								  *(program +  (yy * WIDTH + xx)) = v;
+								  break;
+							  }
 					case 'g': 
-						{
-							int yy = car(stack);
-							stack = cdr(stack);
-							int xx = car(stack);
-							stack = cdr(stack);
-							if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0) {
-								out_of_bounds(xx, yy);
-							}
-							stack = cons(stack, *(program + sizeof(char) * (yy * WIDTH + xx)));
-							break;
-						}
+							  {
+								  int yy = car(stack);
+								  stack = cdr(stack);
+								  int xx = car(stack);
+								  stack = cdr(stack);
+								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
+									  out_of_bounds(xx, yy);
+								  stack = cons(stack, *(program +  (yy * WIDTH + xx)));
+								  break;
+							  }
 					case '&': 
-						{
-							int num;
-							scanf("%d", &num);
-							stack = cons(stack, num);
-							break;
-						}
+							  {
+								  int num;
+								  scanf("%d", &num);
+								  stack = cons(stack, num);
+								  break;
+							  }
 					case '~': 
-						{
-							int a = getchar();
-							stack = cons(stack, a);
-							break;
-						}
+							  {
+								  int a = getchar();
+								  stack = cons(stack, a);
+								  break;
+							  }
 					case '@': 
-						{ return true; }
+							  { return; }
 				}
 			}
 		}
