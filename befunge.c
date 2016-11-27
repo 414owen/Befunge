@@ -60,12 +60,12 @@ struct Stack {
 	int size;
 };
 
-inline bool empty_stack(struct Stack* s) {
+bool empty_stack(struct Stack* s) {
 	return s->pointer < 0;
 }
 
 // return head of list
-inline STACK_TYPE car(struct Stack *s) {
+STACK_TYPE car(struct Stack *s) {
 	if (empty_stack(s)) {
 		return 0;
 	} else {
@@ -73,17 +73,17 @@ inline STACK_TYPE car(struct Stack *s) {
 	}
 }
 
-inline void cdr(struct Stack* s) {
+void cdr(struct Stack* s) {
 	if (!empty_stack(s)) s->pointer -= 1;
 }
 
-inline void free_stack(struct Stack *s) {
+void free_stack(struct Stack *s) {
 	free(s->arr);
 	free(s);
 }
 
 // Add element to head of list
-inline void cons(struct Stack *s, int t) {
+void cons(struct Stack *s, int t) {
 	if (s->pointer == s->size) {
 		s->size *= 2;
 		s->arr = realloc(s->arr, sizeof(STACK_TYPE) * s->size);
@@ -91,7 +91,7 @@ inline void cons(struct Stack *s, int t) {
 	s->arr[++(s->pointer)] = t;
 }
 
-inline struct Stack* new_stack() {
+struct Stack* new_stack() {
 	struct Stack *result = malloc(sizeof(struct Stack));
 	result->pointer = -1;
 	result->size = DEF_STACK_SIZE;
