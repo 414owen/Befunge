@@ -1,4 +1,4 @@
-/* ------------------------ /
+/* ------------------------ */
 /* |                      | */
 /* |                      | */
 /* |      Befunge-93      | */
@@ -376,8 +376,6 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 	struct Program* program = prog_from_file(argv[1]);
-	// printf("Program read\nwidth: %d, height: %d\n", program->width, program->height);
-	// print_prog(program);
 	if (program->valid) {
 		run(program);
 	} 
