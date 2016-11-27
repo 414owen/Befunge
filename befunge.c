@@ -84,6 +84,10 @@ inline void free_stack(struct Stack *s) {
 
 // Add element to head of list
 inline void cons(struct Stack *s, int t) {
+	if (s->pointer == s->size) {
+		s->size *= 2;
+		s->arr = realloc(s->arr, sizeof(STACK_TYPE) * s->size);
+	}
 	s->arr[++(s->pointer)] = t;
 }
 
