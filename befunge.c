@@ -13,6 +13,7 @@
 #include <time.h>
 // #define DEVEL
 #define STACK_TYPE int
+#define DEF_STACK_SIZE 100
 #define uint unsigned int
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -23,16 +24,12 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 #define WIDTH 80
 #define HEIGHT 25
-#define binary_op(__op__) \
-	STACK_TYPE __a__ = car(stack);\
-stack = cdr(stack);\
-STACK_TYPE __b__ = car(stack);\
-STACK_TYPE __new_val__ = __b__ __op__ __a__;\
-if (!empty_stack(stack)) stack->val = __new_val__;\
-else {\
-	stack = cdr(stack);\
-	stack = cons(stack, __new_val__);\
-}
+#define binary_op(__op__, __stack__) \
+	STACK_TYPE __a__ = car(__stack__);\
+cdr(__stack__);\
+STACK_TYPE __b__ = car(__stack__);\
+cdr(__stack__);\
+cons(__stack__, __b__ __op__ __a__);\
 
 #ifdef DEVEL 
 #define dprintf(...) fprintf (stderr, __VA_ARGS__)
@@ -58,12 +55,13 @@ struct Program {
 };
 
 struct Stack {
-	STACK_TYPE val;
-	struct Stack* tail;
+	STACK_TYPE* arr;
+	int pointer;
+	int size;
 };
 
-bool empty_stack(struct Stack* f) {
-	return !f->tail;
+bool empty_stack(struct Stack* s) {
+	return s->pointer < 0;
 }
 
 // return head of list
@@ -71,37 +69,29 @@ STACK_TYPE car(struct Stack *s) {
 	if (empty_stack(s)) {
 		return 0;
 	} else {
-		return s->val;
+		return s->arr[s->pointer];
 	}
 }
 
-struct Stack* cdr(struct Stack* s) {
-	if (empty_stack(s)) {return s;}
-	else {
-		struct Stack* ss = s->tail;
-		free(s);
-		return ss;
-	}
+void cdr(struct Stack* s) {
+	if (!empty_stack(s)) s->pointer -= 1;
 }
 
-void free_all(struct Stack *d) {
-	while (!empty_stack(d)) {
-		d = cdr(d);
-	}
-	cdr(d);
+void free_stack(struct Stack *s) {
+	free(s->arr);
+	free(s);
 }
 
 // Add element to head of list
-struct Stack* cons(struct Stack *f, int t) {
-	struct Stack *result = malloc(sizeof(struct Stack));
-	result->val = t;
-	result->tail = f;
-	return result;
+void cons(struct Stack *s, int t) {
+	s->arr[++(s->pointer)] = t;
 }
 
 struct Stack* new_stack() {
 	struct Stack *result = malloc(sizeof(struct Stack));
-	result->tail = NULL;
+	result->pointer = -1;
+	result->size = DEF_STACK_SIZE;
+	result->arr = malloc(sizeof(STACK_TYPE) * DEF_STACK_SIZE);
 	return result;
 }
 
@@ -188,24 +178,24 @@ void run(struct Program* prog) {
 			if (curr == '"') {
 				string_mode = false;
 			} else {
-				stack = cons(stack, curr);
+				cons(stack, curr);
 			}
 		} else {
 			if (curr >= '0' && curr <= '9') {
-				stack = cons(stack, curr - '0');
+				cons(stack, curr - '0');
 			} else {
 				switch(curr) {
-					case '+': {binary_op(+); break;}
-					case '-': {binary_op(-); break;}
-					case '*': {binary_op(*); break;}
-					case '/': {binary_op(/); break;}
-					case '%': {binary_op(%); break;}
-					case '`': {binary_op(>); break;}
+					case '+': {binary_op(+, stack); break;}
+					case '-': {binary_op(-, stack); break;}
+					case '*': {binary_op(*, stack); break;}
+					case '/': {binary_op(/, stack); break;}
+					case '%': {binary_op(%, stack); break;}
+					case '`': {binary_op(>, stack); break;}
 					case '!': 
 							  {
 								  STACK_TYPE a = car(stack);
-								  stack = cdr(stack);
-								  stack = cons(stack, a == 0);
+								  cdr(stack);
+								  cons(stack, a == 0);
 								  break;
 							  }
 					case '<': 
@@ -258,7 +248,7 @@ void run(struct Program* prog) {
 					case '_': 
 							  {
 								  STACK_TYPE a = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  if (a) {dx = -1;} 
 								  else {dx = 1;}
 								  dy = 0;
@@ -267,7 +257,7 @@ void run(struct Program* prog) {
 					case '|': 
 							  {
 								  STACK_TYPE a = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  if (a) {dy = -1;} 
 								  else {dy = 1;}
 								  dx = 0;
@@ -280,34 +270,34 @@ void run(struct Program* prog) {
 							  }
 					case ':': 
 							  {
-								  stack = cons(stack, car(stack));
+								  cons(stack, car(stack));
 								  break;
 							  }
 					case '\\': 
 							  {
 								  STACK_TYPE a = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  STACK_TYPE b = car(stack);
-								  stack = cdr(stack);
-								  stack = cons(stack, a);
-								  stack = cons(stack, b);
+								  cdr(stack);
+								  cons(stack, a);
+								  cons(stack, b);
 								  break;
 							  }
 					case '$': 
 							  {
-								  stack = cdr(stack);
+								  cdr(stack);
 								  break;
 							  }
 					case '.': 
 							  {
 								  printf("%d ", car(stack));
-								  stack = cdr(stack);
+								  cdr(stack);
 								  break;
 							  }
 					case ',': 
 							  {
 								  putchar(car(stack));
-								  stack = cdr(stack);
+								  cdr(stack);
 								  break;
 							  }
 					case '#': 
@@ -319,11 +309,11 @@ void run(struct Program* prog) {
 					case 'p': 
 							  {
 								  STACK_TYPE yy = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  STACK_TYPE xx = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  STACK_TYPE v = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 									  out_of_bounds(xx, yy);
 								  if (width < xx) width = xx;
@@ -334,25 +324,25 @@ void run(struct Program* prog) {
 					case 'g': 
 							  {
 								  STACK_TYPE yy = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  STACK_TYPE xx = car(stack);
-								  stack = cdr(stack);
+								  cdr(stack);
 								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 									  out_of_bounds(xx, yy);
-								  stack = cons(stack, (unsigned char) *(program +  (yy * WIDTH + xx)));
+								  cons(stack, (unsigned char) *(program +  (yy * WIDTH + xx)));
 								  break;
 							  }
 					case '&': 
 							  {
 								  int num;
 								  scanf("%d", &num);
-								  stack = cons(stack, num);
+								  cons(stack, num);
 								  break;
 							  }
 					case '~': 
 							  {
 								  int a = getchar();
-								  stack = cons(stack, a);
+								  cons(stack, a);
 								  break;
 							  }
 					case '@': 
