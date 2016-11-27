@@ -13,7 +13,7 @@
 #include <time.h>
 // #define DEVEL
 #define STACK_TYPE int
-#define DEF_STACK_SIZE 100
+#define DEF_STACK_SIZE 1000
 #define uint unsigned int
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
