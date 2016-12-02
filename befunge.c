@@ -24,12 +24,14 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 #define WIDTH 80
 #define HEIGHT 25
-#define binary_op(__op__, __stack__) \
+#define binary_op(__op_char__, __op__, __stack__) \
+	case __op_char__: {\
 	STACK_TYPE __a__ = car(__stack__);\
 cdr(__stack__);\
 STACK_TYPE __b__ = car(__stack__);\
 cdr(__stack__);\
 cons(__stack__, __b__ __op__ __a__);\
+break;}
 
 #ifdef DEVEL 
 #define dprintf(...) fprintf (stderr, __VA_ARGS__)
@@ -189,12 +191,12 @@ void run(struct Program* prog) {
 				cons(stack, curr - '0');
 			} else {
 				switch(curr) {
-					case '+': {binary_op(+, stack); break;}
-					case '-': {binary_op(-, stack); break;}
-					case '*': {binary_op(*, stack); break;}
-					case '/': {binary_op(/, stack); break;}
-					case '%': {binary_op(%, stack); break;}
-					case '`': {binary_op(>, stack); break;}
+					binary_op('+', +, stack)
+					binary_op('-', -, stack)
+					binary_op('*', *, stack)
+					binary_op('/', /, stack)
+					binary_op('%', %, stack)
+					binary_op('`', >, stack)
 					case '!': 
 							  {
 								  STACK_TYPE a = car(stack);
