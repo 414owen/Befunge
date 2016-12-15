@@ -1,0 +1,166 @@
+------------------------
+|                      |
+|                      |
+|      Benchmarks      |
+|                      |
+|                      |
+------------------------
+
+These benchmarks are calculated with perf stat, using 200 rounds to average the
+results
+
+Both interpreters were compiled with :
+gcc -O3 -o befunge <path/to/interpreter.c>
+
+The command used to benchmark these interpreters:
+perf stat -r 200 <interpreter> <program>
+
+---------------------------
+|                         |
+|    My implementation    |
+|                         |
+---------------------------
+
+-------
+|  1  |
+-------
+
+ Performance counter stats for './befunge programs/sierpinski.bef' (200 runs):
+
+          6.346718      task-clock:u (msec)       #    0.953 CPUs utilized            ( +-  1.16% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                44      page-faults:u             #    0.007 M/sec                    ( +-  0.23% )
+        10,978,659      cycles:u                  #    1.730 GHz                      ( +-  0.16% )
+        11,830,822      instructions:u            #    1.08  insn per cycle           ( +-  0.00% )
+         1,571,595      branches:u                #  247.623 M/sec                    ( +-  0.00% )
+             7,804      branch-misses:u           #    0.50% of all branches          ( +-  0.27% )
+
+       0.006659736 seconds time elapsed                                          ( +-  1.17% )
+
+-------
+|  2  |
+-------
+
+ Performance counter stats for './befunge programs/hello-world.bef' (200 runs):
+
+          0.420044      task-clock:u (msec)       #    0.566 CPUs utilized            ( +-  3.36% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                44      page-faults:u             #    0.106 M/sec                    ( +-  0.23% )
+           229,101      cycles:u                  #    0.545 GHz                      ( +-  0.79% )
+           186,970      instructions:u            #    0.82  insn per cycle           ( +-  0.00% )
+            37,669      branches:u                #   89.678 M/sec                    ( +-  0.00% )
+             3,330      branch-misses:u           #    8.84% of all branches          ( +-  0.22% )
+
+       0.000742524 seconds time elapsed                                          ( +-  3.49% )
+
+-------
+|  3  |
+-------
+
+ Performance counter stats for './befunge programs/sieve-of-eratosthenes.bef' (200 runs):
+
+          0.600313      task-clock:u (msec)       #    0.632 CPUs utilized            ( +-  4.42% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                46      page-faults:u             #    0.077 M/sec                    ( +-  0.17% )
+           420,629      cycles:u                  #    0.701 GHz                      ( +-  0.53% )
+           406,858      instructions:u            #    0.97  insn per cycle           ( +-  0.00% )
+            69,820      branches:u                #  116.307 M/sec                    ( +-  0.00% )
+             3,454      branch-misses:u           #    4.95% of all branches          ( +-  0.28% )
+
+       0.000949366 seconds time elapsed                                          ( +-  4.47% )
+
+-------
+|  4  |
+-------
+
+ Performance counter stats for './befunge programs/pi.bef' (200 runs):
+
+          0.488372      task-clock:u (msec)       #    0.587 CPUs utilized            ( +-  4.21% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                44      page-faults:u             #    0.091 M/sec                    ( +-  0.22% )
+           298,466      cycles:u                  #    0.611 GHz                      ( +-  0.61% )
+           271,991      instructions:u            #    0.91  insn per cycle           ( +-  0.00% )
+            51,040      branches:u                #  104.510 M/sec                    ( +-  0.00% )
+             3,367      branch-misses:u           #    6.60% of all branches          ( +-  0.23% )
+
+       0.000831675 seconds time elapsed                                          ( +-  4.29% )
+
+
+----------------------------------
+|                                |
+|    Reference implementation    |
+|                                |
+----------------------------------
+
+-------
+|  1  |
+-------
+
+ Performance counter stats for './befunge programs/sierpinski.bef' (200 runs):
+
+         16.951717      task-clock:u (msec)       #    0.978 CPUs utilized            ( +-  0.82% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                44      page-faults:u             #    0.003 M/sec                    ( +-  0.16% )
+        20,155,410      cycles:u                  #    1.189 GHz                      ( +-  0.61% )
+        48,308,409      instructions:u            #    2.40  insn per cycle           ( +-  0.00% )
+        10,813,403      branches:u                #  637.894 M/sec                    ( +-  0.00% )
+            60,161      branch-misses:u           #    0.56% of all branches          ( +-  0.20% )
+
+       0.017336113 seconds time elapsed                                          ( +-  0.85% )
+
+-------
+|  2  |
+-------
+
+ Performance counter stats for './befunge programs/hello-world.bef' (200 runs):
+
+          0.472008      task-clock:u (msec)       #    0.587 CPUs utilized            ( +-  4.74% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                44      page-faults:u             #    0.094 M/sec                    ( +-  0.17% )
+           239,870      cycles:u                  #    0.508 GHz                      ( +-  0.93% )
+           197,334      instructions:u            #    0.82  insn per cycle           ( +-  0.00% )
+            41,571      branches:u                #   88.073 M/sec                    ( +-  0.00% )
+             3,243      branch-misses:u           #    7.80% of all branches          ( +-  0.26% )
+
+       0.000803835 seconds time elapsed                                          ( +-  4.74% )
+
+-------
+|  3  |
+-------
+
+ Performance counter stats for './befunge programs/sieve-of-eratosthenes.bef' (200 runs):
+
+          0.806005      task-clock:u (msec)       #    0.693 CPUs utilized            ( +-  4.11% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                46      page-faults:u             #    0.057 M/sec                    ( +-  0.14% )
+           655,644      cycles:u                  #    0.813 GHz                      ( +-  1.11% )
+         1,156,252      instructions:u            #    1.76  insn per cycle           ( +-  0.00% )
+           260,392      branches:u                #  323.065 M/sec                    ( +-  0.00% )
+             4,062      branch-misses:u           #    1.56% of all branches          ( +-  0.23% )
+
+       0.001163159 seconds time elapsed                                          ( +-  4.13% )
+
+-------
+|  4  |
+-------
+
+ Performance counter stats for './befunge programs/pi.bef' (200 runs):
+
+          0.808156      task-clock:u (msec)       #    0.705 CPUs utilized            ( +-  3.74% )
+                 0      context-switches:u        #    0.000 K/sec                  
+                 0      cpu-migrations:u          #    0.000 K/sec                  
+                44      page-faults:u             #    0.055 M/sec                    ( +-  0.18% )
+           499,959      cycles:u                  #    0.619 GHz                      ( +-  1.01% )
+           713,259      instructions:u            #    1.43  insn per cycle           ( +-  0.00% )
+           153,129      branches:u                #  189.480 M/sec                    ( +-  0.00% )
+             3,751      branch-misses:u           #    2.45% of all branches          ( +-  0.25% )
+
+       0.001146154 seconds time elapsed                                          ( +-  3.67% )
+

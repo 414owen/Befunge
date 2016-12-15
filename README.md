@@ -4,8 +4,11 @@ This is quite a fast interpreter for [Befunge-93](https://en.wikipedia.org/wiki/
 
 ## State
 
-100% compliance with the Befunge-93 specifications, however there are still  
-some optimizations to be done.
+100% compliance with the Befunge-93 specifications.
+
+## Performance
+
+see benchmarks.txt
 
 ## How to build:
 
