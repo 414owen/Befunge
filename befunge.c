@@ -24,6 +24,7 @@
 #define ANSI_COLOR_RESET   "\x1b[0m"
 #define WIDTH 80
 #define HEIGHT 25
+
 #define binary_op(__op_char__, __op__, __stack__) \
 case __op_char__: {\
 	STACK_TYPE __a__ = car(__stack__);\
@@ -38,6 +39,16 @@ case __op_char__: {\
 case __case__: {\
 	dx = __dx__;\
 	dy = __dy__;\
+	break;\
+}
+
+#define if_case(__op__, __change__, __stop__)\
+case __op__: {\
+	STACK_TYPE a = car(stack);\
+	cdr(stack);\
+	if (a) {__change__ = -1;} \
+	else {__change__ = 1;}\
+	__stop__ = 0;\
 	break;\
 }
 
@@ -205,130 +216,100 @@ void run(struct Program* prog) {
 					binary_op('/', /, stack)
 					binary_op('%', %, stack)
 					binary_op('`', >, stack)
-					case '!': 
-							  {
-								  STACK_TYPE a = car(stack);
-								  cdr(stack);
-								  cons(stack, a == 0);
-								  break;
-							  }
+					case '!': {
+						STACK_TYPE a = car(stack);
+						cdr(stack);
+						cons(stack, a == 0);
+						break;
+					}
 					direction_case('<', -1, 0)
 					direction_case('>', 1, 0)
 					direction_case('^', 0, -1)
 					direction_case('v', 0, 1)
-					case '?': 
-							  {
-								  int dir = rand() % 4;
-								  switch(dir) {
-									  direction_case(0, 0, 1)
-									  direction_case(1, 0, -1)
-									  direction_case(2, 1, 0)
-									  direction_case(3, -1, 0)
-								  }
-								  break;
-							  }
-					case '_': 
-							  {
-								  STACK_TYPE a = car(stack);
-								  cdr(stack);
-								  if (a) {dx = -1;} 
-								  else {dx = 1;}
-								  dy = 0;
-								  break;
-							  }
-					case '|': 
-							  {
-								  STACK_TYPE a = car(stack);
-								  cdr(stack);
-								  if (a) {dy = -1;} 
-								  else {dy = 1;}
-								  dx = 0;
-								  break;
-							  }
-					case '"': 
-							  {
-								  string_mode = !string_mode;
-								  break;
-							  }
-					case ':': 
-							  {
-								  cons(stack, car(stack));
-								  break;
-							  }
-					case '\\': 
-							  {
-								  STACK_TYPE a = car(stack);
-								  cdr(stack);
-								  STACK_TYPE b = car(stack);
-								  cdr(stack);
-								  cons(stack, a);
-								  cons(stack, b);
-								  break;
-							  }
-					case '$': 
-							  {
-								  cdr(stack);
-								  break;
-							  }
-					case '.': 
-							  {
-								  printf("%d ", car(stack));
-								  cdr(stack);
-								  break;
-							  }
-					case ',': 
-							  {
-								  putchar(car(stack));
-								  cdr(stack);
-								  break;
-							  }
-					case '#': 
-							  {
-								  x += dx;
-								  y += dy;
-								  break;
-							  }
-					case 'p': 
-							  {
-								  STACK_TYPE yy = car(stack);
-								  cdr(stack);
-								  STACK_TYPE xx = car(stack);
-								  cdr(stack);
-								  STACK_TYPE v = car(stack);
-								  cdr(stack);
-								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
-									  out_of_bounds(xx, yy);
-								  if (width < xx) width = xx;
-								  if (height < yy) height = yy;
-								  *(program +  (yy * WIDTH + xx)) = v;
-								  break;
-							  }
-					case 'g': 
-							  {
-								  STACK_TYPE yy = car(stack);
-								  cdr(stack);
-								  STACK_TYPE xx = car(stack);
-								  cdr(stack);
-								  if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
-									  out_of_bounds(xx, yy);
-								  cons(stack, (unsigned char) *(program +  (yy * WIDTH + xx)));
-								  break;
-							  }
-					case '&': 
-							  {
-								  int num;
-								  scanf("%d", &num);
-								  cons(stack, num);
-								  break;
-							  }
-					case '~': 
-							  {
-								  int a = getchar();
-								  cons(stack, a);
-								  break;
-							  }
-					case '@': 
-							  { return; }
+					case '?': {
+						int dir = rand() % 4;
+						switch(dir) {
+							direction_case(0, 0, 1)
+							direction_case(1, 0, -1)
+							direction_case(2, 1, 0)
+							direction_case(3, -1, 0)
+						}
+						break;
+					}
+					if_case('_', dx, dy)
+					if_case('|', dy, dx)
+					case '"': {
+						string_mode = !string_mode;
+						break;
+					}
+					case ':': {
+						cons(stack, car(stack));
+						break;
+					}
+					case '\\': {
+						STACK_TYPE a = car(stack);
+						cdr(stack);
+						STACK_TYPE b = car(stack);
+						cdr(stack);
+						cons(stack, a);
+						cons(stack, b);
+						break;
+					}
+					case '$': {
+						cdr(stack);
+						break;
+					}
+					case '.': {
+						printf("%d ", car(stack));
+						cdr(stack);
+						break;
+					}
+					case ',': {
+						putchar(car(stack));
+						cdr(stack);
+						break;
+					}
+					case '#': {
+						x += dx;
+						y += dy;
+						break;
+					}
+					case 'p': {
+						STACK_TYPE yy = car(stack);
+						cdr(stack);
+						STACK_TYPE xx = car(stack);
+						cdr(stack);
+						STACK_TYPE v = car(stack);
+						cdr(stack);
+						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
+						    out_of_bounds(xx, yy);
+						if (width < xx) width = xx;
+						if (height < yy) height = yy;
+						*(program +  (yy * WIDTH + xx)) = v;
+						break;
+					}
+					case 'g': {
+						STACK_TYPE yy = car(stack);
+						cdr(stack);
+						STACK_TYPE xx = car(stack);
+						cdr(stack);
+						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
+						    out_of_bounds(xx, yy);
+						cons(stack, (unsigned char) *(program +  (yy * WIDTH + xx)));
+						break;
+					}
+					case '&': {
+						int num;
+						scanf("%d", &num);
+						cons(stack, num);
+						break;
+					}
+					case '~': {
+						int a = getchar();
+						cons(stack, a);
+						break;
+					}
+					case '@': { return; }
 				}
 			}
 		}
@@ -345,12 +326,12 @@ int main(int argc, char *argv[]) {
 	srand(time(0));
 	if (argc != 2) {
 		usage(argv[0]); 
-		return 0;
+	} else {
+		struct Program* program = prog_from_file(argv[1]);
+		if (program->valid) {
+			run(program);
+		} 
 	}
-	struct Program* program = prog_from_file(argv[1]);
-	if (program->valid) {
-		run(program);
-	} 
 	return 0;
 }
 
