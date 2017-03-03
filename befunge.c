@@ -1,12 +1,9 @@
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 // #define DEVEL
 #define STACK_TYPE int
 #define DEF_STACK_SIZE 1000
-#define uint unsigned int
 #define WIDTH 80
 #define HEIGHT 25
 
@@ -44,7 +41,7 @@ case __op__: {\
 #endif
 
 struct Program {
-	bool valid;
+	char valid;
 	size_t width;
 	size_t height;
 	char* lines;
@@ -56,7 +53,7 @@ struct Stack {
 	int size;
 };
 
-bool empty_stack(struct Stack* s) {
+char empty_stack(struct Stack* s) {
 	return s->pointer < 0;
 }
 
@@ -106,18 +103,18 @@ struct Program* prog_from_file(char* filename) {
 	struct Program* program = malloc(sizeof(struct Program));
 	if (file == NULL) {
 		invalid_file();
-		program->valid = false;
+		program->valid = 0;
 		return program;
 	}
 	size_t bflines = 0;
 	size_t line_buf = 100;
 	size_t prog_size = WIDTH * HEIGHT;
-	char* prog = malloc(prog_size); // + 2 is for '\n' and '\0' from fgets
+	char* prog = malloc(prog_size);
 	size_t max_len = 0;
-	while (true) {
+	while (1) {
 		char* linep = prog + bflines * WIDTH;
 		int line_len = 0;
-		while (true) {
+		while (1) {
 			int curr = fgetc(file);
 			if (curr == '\n') {
 				bflines++;
@@ -134,9 +131,10 @@ struct Program* prog_from_file(char* filename) {
 	}
 fileEnd:	
 	program->lines = prog;
-	program->valid = true;
+	program->valid = 1;
 	program->width = max_len;
 	program->height = bflines;
+	fclose(file);
 	return program;
 }
 
@@ -168,15 +166,15 @@ void run(struct Program* prog) {
 	int dx = 1;
 	int dy = 0;
 	struct Stack* stack = new_stack();
-	bool string_mode = false;
-	while(true) {
+	char string_mode = 0;
+	while(1) {
 		char curr = *(program +  (y * WIDTH + x));
 #ifdef DEVEL
 		print_prog_with_pointer(program, width, height, x, y);
 #endif
 		if (string_mode) {
 			if (curr == '"') {
-				string_mode = false;
+				string_mode = 0;
 			} else {
 				cons(stack, curr);
 			}
@@ -284,7 +282,10 @@ void run(struct Program* prog) {
 						cons(stack, a);
 						break;
 					}
-					case '@': { return; }
+					case '@': { 
+						free_stack(stack);
+						return; 
+					}
 				}
 			}
 		}
@@ -306,6 +307,8 @@ int main(int argc, char *argv[]) {
 		if (program->valid) {
 			run(program);
 		} 
+		free(program->lines);
+		free(program);
 	}
 	return 0;
 }
