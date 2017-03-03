@@ -1,11 +1,3 @@
-/* ------------------------ */
-/* |                      | */
-/* |                      | */
-/* |      Befunge-93      | */
-/* |                      | */
-/* |                      | */
-/* ------------------------ */
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,16 +49,6 @@ case __op__: {\
 #else
 #define dprintf(...) 
 #endif
-
-/* ---------- */
-/* |  TODO  | */
-/* ---------- */
-
-// * Determine whether file supplied is a folder before proceeding
-// * Decompile switch-statement, see if we benefit from manual character
-// binary-search (log(n)), or an array of funtion pointers (n, but has more
-// overhead).
-
 
 struct Program {
 	bool valid;
