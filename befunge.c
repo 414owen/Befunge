@@ -25,13 +25,21 @@
 #define WIDTH 80
 #define HEIGHT 25
 #define binary_op(__op_char__, __op__, __stack__) \
-	case __op_char__: {\
+case __op_char__: {\
 	STACK_TYPE __a__ = car(__stack__);\
-cdr(__stack__);\
-STACK_TYPE __b__ = car(__stack__);\
-cdr(__stack__);\
-cons(__stack__, __b__ __op__ __a__);\
-break;}
+	cdr(__stack__);\
+	STACK_TYPE __b__ = car(__stack__);\
+	cdr(__stack__);\
+	cons(__stack__, __b__ __op__ __a__);\
+	break;\
+}
+
+#define direction_case(__case__, __dx__, __dy__) \
+case __case__: {\
+	dx = __dx__;\
+	dy = __dy__;\
+	break;\
+}
 
 #ifdef DEVEL 
 #define dprintf(...) fprintf (stderr, __VA_ARGS__)
@@ -204,50 +212,18 @@ void run(struct Program* prog) {
 								  cons(stack, a == 0);
 								  break;
 							  }
-					case '<': 
-							  {
-								  dx = -1;
-								  dy = 0;
-								  break;
-							  }
-					case '>': 
-							  {
-								  dx = 1;
-								  dy = 0;
-								  break;
-							  }
-					case '^': 
-							  {
-								  dy = -1;
-								  dx = 0;
-								  break;
-							  }
-					case 'v': 
-							  {
-								  dx = 0;
-								  dy = 1;
-								  break;
-							  }
+					direction_case('<', -1, 0)
+					direction_case('>', 1, 0)
+					direction_case('^', 0, -1)
+					direction_case('v', 0, 1)
 					case '?': 
 							  {
 								  int dir = rand() % 4;
 								  switch(dir) {
-									  case 0:
-										  dx = 0;
-										  dy = 1;
-										  break;
-									  case 1:
-										  dx = 0;
-										  dy = -1;
-										  break;
-									  case 2:
-										  dx = 1;
-										  dy = 0;
-										  break;
-									  case 3:
-										  dx = -1;
-										  dy = 0;
-										  break;
+									  direction_case(0, 0, 1)
+									  direction_case(1, 0, -1)
+									  direction_case(2, 1, 0)
+									  direction_case(3, -1, 0)
 								  }
 								  break;
 							  }
