@@ -7,13 +7,6 @@
 #define STACK_TYPE int
 #define DEF_STACK_SIZE 1000
 #define uint unsigned int
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
 #define WIDTH 80
 #define HEIGHT 25
 
@@ -152,7 +145,7 @@ void print_prog_with_pointer(char* program, int width, int height, int x, int y)
 		int linep = (WIDTH * j);
 		for (int i = 0; i < width; i++) {
 			if (y == j && x == i) {
-				dprintf(ANSI_COLOR_GREEN "X" ANSI_COLOR_RESET);
+				dprintf("\x1b[32mX\x1b[0m");
 			} else {
 				dprintf("%c", *(program + (linep + i)));
 			}
