@@ -126,18 +126,19 @@ fileEnd:
 }
 
 void print_prog_with_pointer(char* program, int width, int height, int x, int y, struct Stack *s) {
+	fprintf(stderr, "\x1b[2J");
 	for (int j = 0; j < height; j++) {
 		int linep = (WIDTH * j);
 		for (int i = 0; i < width; i++) {
 			if (y == j && x == i) {
-				fprintf(stderr, "\x1b[32mX\x1b[0m");
+				fprintf(stderr, "\x1b[44mX\x1b[49m");
 			} else {
 				fprintf(stderr, "%c", *(program + (linep + i)));
 			}
 		}
 		fprintf(stderr, "\n");
 	}
-	fprintf(stderr, "\nstack:");
+	fprintf(stderr, "\n\x1b[34mStack: \x1b[39m");
 	for (STACK_TYPE* p = s->arr; p <= s->pointer; p++) {
 		fprintf(stderr, " %d", *p);
 	}
@@ -161,9 +162,9 @@ void run(struct Program* prog) {
 	while(1) {
 		char curr = *(program + (y * WIDTH + x));
 #ifdef DEVEL
-		fprintf(stderr, "\x1b[2J");
 		print_prog_with_pointer(program, width, height, x, y, stack);
-		getchar();
+		fprintf(stderr, "\n(press <return> to continue) ");
+		while (getchar() != '\n') {}
 #endif
 		if (string_mode) {
 			if (curr == '"') {

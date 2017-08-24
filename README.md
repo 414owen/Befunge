@@ -2,30 +2,37 @@
 
 This is quite a fast interpreter for [Befunge-93](https://en.wikipedia.org/wiki/Befunge).
 
-## State
+## Features
 
-100% compliance with the Befunge-93 specifications.
+* 100% compliance with the Befunge-93 specifications
+* Step-by-step befunge debugger
 
 ## Performance
 
-see benchmarks.txt
+See `benchmarks.txt`
 
 ## How to build:
 
 ### Production:
 
+Run your befunge programs at max speed
+
 ```
 make
 ```
 
-### Development
+### Step-By-Step
+
+Print the program state at every command
 
 ```
-make devel
+make debug
 ```
 
 ## How to run
 
 ```
-./befunge *my-befunge-program.file*
+./befunge <path/to/program.bef>
 ```
+
+I've included a few great programs for you to try in the `programs` folder

@@ -11,3 +11,5 @@ devel: $(INPUT)
 
 catprog: $(INPUT)
 	$(CC) $(DEBUG) $(OUTPUT) -DDEVEL $(INPUT)
+
+debug: catprog
