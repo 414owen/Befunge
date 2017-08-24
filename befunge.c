@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -9,11 +10,9 @@
 
 #define binary_op(__op_char__, __op__, __stack__) \
 case __op_char__: {\
-	STACK_TYPE __a__ = car(__stack__);\
-	cdr(__stack__);\
-	STACK_TYPE __b__ = car(__stack__);\
-	cdr(__stack__);\
-	cons(__stack__, __b__ __op__ __a__);\
+	STACK_TYPE __a__ = pop(__stack__);\
+	STACK_TYPE __b__ = pop(__stack__);\
+	push(__stack__, __b__ __op__ __a__);\
 	break;\
 }
 
@@ -26,8 +25,7 @@ case __case__: {\
 
 #define if_case(__op__, __change__, __stop__)\
 case __op__: {\
-	STACK_TYPE a = car(stack);\
-	cdr(stack);\
+	STACK_TYPE a = pop(stack);\
 	if (a) {__change__ = -1;} \
 	else {__change__ = 1;}\
 	__stop__ = 0;\
@@ -43,46 +41,45 @@ struct Program {
 
 struct Stack {
 	STACK_TYPE* arr;
-	int pointer;
+	STACK_TYPE* pointer;
 	int size;
 };
 
 char empty_stack(struct Stack* s) {
-	return s->pointer < 0;
+	return s->pointer < s->arr;
+}
+
+STACK_TYPE head_with_info(bool empty, struct Stack *s) {
+	if (empty) {return 0;}
+	return *(s->pointer);
 }
 
 // return head of list
-STACK_TYPE car(struct Stack *s) {
-	if (empty_stack(s)) {
-		return 0;
-	} else {
-		return s->arr[s->pointer];
-	}
+STACK_TYPE head(struct Stack *s) {
+	return head_with_info(empty_stack(s), s);
 }
 
-void cdr(struct Stack* s) {
-	if (!empty_stack(s)) s->pointer -= 1;
-}
-
-void free_stack(struct Stack *s) {
-	free(s->arr);
-	free(s);
+STACK_TYPE pop(struct Stack* s) {
+	bool empty = empty_stack(s);
+	STACK_TYPE res = head_with_info(empty, s);
+	if (!empty) {s->pointer--;}
+	return res;
 }
 
 // Add element to head of list
-void cons(struct Stack *s, int t) {
-	if (s->pointer == s->size) {
+void push(struct Stack *s, int t) {
+	if (s->pointer - s->arr + 1 == s->size) {
 		s->size *= 2;
 		s->arr = realloc(s->arr, sizeof(STACK_TYPE) * s->size);
 	}
-	s->arr[++(s->pointer)] = t;
+	*(++(s->pointer)) = t;
 }
 
 struct Stack* new_stack() {
 	struct Stack *result = malloc(sizeof(struct Stack));
-	result->pointer = -1;
-	result->size = DEF_STACK_SIZE;
 	result->arr = malloc(sizeof(STACK_TYPE) * DEF_STACK_SIZE);
+	result->pointer = result->arr - 1;
+	result->size = DEF_STACK_SIZE;
 	return result;
 }
 
@@ -128,7 +125,7 @@ fileEnd:
 	return program;
 }
 
-void print_prog_with_pointer(char* program, int width, int height, int x, int y, struct Stack *st) {
+void print_prog_with_pointer(char* program, int width, int height, int x, int y, struct Stack *s) {
 	for (int j = 0; j < height; j++) {
 		int linep = (WIDTH * j);
 		for (int i = 0; i < width; i++) {
@@ -141,8 +138,8 @@ void print_prog_with_pointer(char* program, int width, int height, int x, int y,
 		fprintf(stderr, "\n");
 	}
 	fprintf(stderr, "\nstack:");
-	for (int i = 0; i <= st->pointer; i++) {
-		fprintf(stderr, " %d", st->arr[i]);
+	for (STACK_TYPE* p = s->arr; p <= s->pointer; p++) {
+		fprintf(stderr, " %d", *p);
 	}
 	fprintf(stderr, "\n");
 }
@@ -162,7 +159,7 @@ void run(struct Program* prog) {
 	struct Stack* stack = new_stack();
 	char string_mode = 0;
 	while(1) {
-		char curr = *(program +  (y * WIDTH + x));
+		char curr = *(program + (y * WIDTH + x));
 #ifdef DEVEL
 		fprintf(stderr, "\x1b[2J");
 		print_prog_with_pointer(program, width, height, x, y, stack);
@@ -172,11 +169,11 @@ void run(struct Program* prog) {
 			if (curr == '"') {
 				string_mode = 0;
 			} else {
-				cons(stack, curr);
+				push(stack, curr);
 			}
 		} else {
 			if (curr >= '0' && curr <= '9') {
-				cons(stack, curr - '0');
+				push(stack, curr - '0');
 			} else {
 				switch(curr) {
 					binary_op('+', +, stack)
@@ -186,9 +183,8 @@ void run(struct Program* prog) {
 					binary_op('%', %, stack)
 					binary_op('`', >, stack)
 					case '!': {
-						STACK_TYPE a = car(stack);
-						cdr(stack);
-						cons(stack, a == 0);
+						STACK_TYPE a = pop(stack);
+						push(stack, a == 0);
 						break;
 					}
 					direction_case('<', -1, 0)
@@ -212,30 +208,26 @@ void run(struct Program* prog) {
 						break;
 					}
 					case ':': {
-						cons(stack, car(stack));
+						push(stack, head(stack));
 						break;
 					}
 					case '\\': {
-						STACK_TYPE a = car(stack);
-						cdr(stack);
-						STACK_TYPE b = car(stack);
-						cdr(stack);
-						cons(stack, a);
-						cons(stack, b);
-						break;
-					}
+						 STACK_TYPE a = pop(stack);
+						 STACK_TYPE b = pop(stack);
+						 push(stack, a);
+						 push(stack, b);
+						 break;
+					 }
 					case '$': {
-						cdr(stack);
+						pop(stack);
 						break;
 					}
 					case '.': {
-						printf("%d ", car(stack));
-						cdr(stack);
+						printf("%d ", pop(stack));
 						break;
 					}
 					case ',': {
-						putchar(car(stack));
-						cdr(stack);
+						putchar(pop(stack));
 						break;
 					}
 					case '#': {
@@ -244,42 +236,38 @@ void run(struct Program* prog) {
 						break;
 					}
 					case 'p': {
-						STACK_TYPE yy = car(stack);
-						cdr(stack);
-						STACK_TYPE xx = car(stack);
-						cdr(stack);
-						STACK_TYPE v = car(stack);
-						cdr(stack);
+						STACK_TYPE yy = pop(stack);
+						STACK_TYPE xx = pop(stack);
+						STACK_TYPE v = pop(stack);
 						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
-						    out_of_bounds(xx, yy);
+							out_of_bounds(xx, yy);
 						if (width < xx) width = xx;
 						if (height < yy) height = yy;
-						*(program +  (yy * WIDTH + xx)) = v;
+						*(program +	(yy * WIDTH + xx)) = v;
 						break;
 					}
 					case 'g': {
-						STACK_TYPE yy = car(stack);
-						cdr(stack);
-						STACK_TYPE xx = car(stack);
-						cdr(stack);
+						STACK_TYPE yy = pop(stack);
+						STACK_TYPE xx = pop(stack);
 						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
-						    out_of_bounds(xx, yy);
-						cons(stack, (unsigned char) *(program +  (yy * WIDTH + xx)));
+							out_of_bounds(xx, yy);
+						push(stack, (unsigned char) *(program + (yy * WIDTH + xx)));
 						break;
 					}
 					case '&': {
 						int num;
 						scanf("%d", &num);
-						cons(stack, num);
+						push(stack, num);
 						break;
 					}
 					case '~': {
 						int a = getchar();
-						cons(stack, a);
+						push(stack, a);
 						break;
 					}
 					case '@': {
-						free_stack(stack);
+						free(stack->arr);
+						free(stack);
 						return;
 					}
 				}
