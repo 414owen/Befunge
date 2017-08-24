@@ -29,6 +29,8 @@ Print the program state at every command
 make debug
 ```
 
+![Debugger](http://owenowen.netsoc.ie/res/befunge/debug.png)
+
 ## How to run
 
 ```
