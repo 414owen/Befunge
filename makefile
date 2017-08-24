@@ -1,8 +1,13 @@
-release: befunge.c
-	clang -O3 -o befunge befunge.c
+CC?=gcc
+DEBUG=-g -O0
+OUTPUT=-o befunge
+INPUT=befunge.c
 
-devel: befunge.c
-	clang -g -o befunge befunge.c
+release: $(INPUT)
+	$(CC) -O3 $(OUTPUT) $(INPUT)
 
-catprog: befunge.c
-	clang -g -o befunge -DDEVEL befunge.c
+devel: $(INPUT)
+	$(CC) $(DEBUG) $(OUTPUT) $(INPUT)
+
+catprog: $(INPUT)
+	$(CC) $(DEBUG) $(OUTPUT) -DDEVEL $(INPUT)
