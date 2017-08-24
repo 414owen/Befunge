@@ -34,12 +34,6 @@ case __op__: {\
 	break;\
 }
 
-#ifdef DEVEL 
-#define dprintf(...) fprintf (stderr, __VA_ARGS__)
-#else
-#define dprintf(...) 
-#endif
-
 struct Program {
 	char valid;
 	size_t width;
@@ -92,17 +86,13 @@ struct Stack* new_stack() {
 	return result;
 }
 
-void invalid_file() {
-	printf("Couldn't open file. Did you get the path right?\n");
-}
-
 // "Classic Premature Optimisation" - Brian Whelan (BAmod pending)
 // "Shut up I wanna" - me
 struct Program* prog_from_file(char* filename) {
 	FILE* file = fopen(filename, "r");
 	struct Program* program = malloc(sizeof(struct Program));
 	if (file == NULL) {
-		invalid_file();
+		fprintf(stderr, "Couldn't open file. Did you get the path right?\n");
 		program->valid = 0;
 		return program;
 	}
@@ -129,7 +119,7 @@ struct Program* prog_from_file(char* filename) {
 			} else {*(linep + line_len++) = (char) curr;}
 		}
 	}
-fileEnd:	
+fileEnd:
 	program->lines = prog;
 	program->valid = 1;
 	program->width = max_len;
@@ -143,18 +133,18 @@ void print_prog_with_pointer(char* program, int width, int height, int x, int y,
 		int linep = (WIDTH * j);
 		for (int i = 0; i < width; i++) {
 			if (y == j && x == i) {
-				dprintf("\x1b[32mX\x1b[0m");
+				fprintf(stderr, "\x1b[32mX\x1b[0m");
 			} else {
-				dprintf("%c", *(program + (linep + i)));
+				fprintf(stderr, "%c", *(program + (linep + i)));
 			}
 		}
-		dprintf("\n");
+		fprintf(stderr, "\n");
 	}
-	dprintf("\nstack:");
+	fprintf(stderr, "\nstack:");
 	for (int i = 0; i <= st->pointer; i++) {
-		dprintf(" %d", st->arr[i]);
+		fprintf(stderr, " %d", st->arr[i]);
 	}
-	dprintf("\n");
+	fprintf(stderr, "\n");
 }
 
 void out_of_bounds(int x, int y) {
@@ -174,7 +164,7 @@ void run(struct Program* prog) {
 	while(1) {
 		char curr = *(program +  (y * WIDTH + x));
 #ifdef DEVEL
-		dprintf("\x1b[2J");
+		fprintf(stderr, "\x1b[2J");
 		print_prog_with_pointer(program, width, height, x, y, stack);
 		getchar();
 #endif
@@ -288,9 +278,9 @@ void run(struct Program* prog) {
 						cons(stack, a);
 						break;
 					}
-					case '@': { 
+					case '@': {
 						free_stack(stack);
-						return; 
+						return;
 					}
 				}
 			}
@@ -307,15 +297,14 @@ void usage(char* launch) {
 int main(int argc, char *argv[]) {
 	srand(time(0));
 	if (argc != 2) {
-		usage(argv[0]); 
+		usage(argv[0]);
 	} else {
 		struct Program* program = prog_from_file(argv[1]);
 		if (program->valid) {
 			run(program);
-		} 
+		}
 		free(program->lines);
 		free(program);
 	}
 	return 0;
 }
-
