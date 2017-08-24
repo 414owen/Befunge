@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-// #define DEVEL
+
 #define STACK_TYPE int
 #define DEF_STACK_SIZE 1000
 #define WIDTH 80
@@ -138,7 +138,7 @@ fileEnd:
 	return program;
 }
 
-void print_prog_with_pointer(char* program, int width, int height, int x, int y) {
+void print_prog_with_pointer(char* program, int width, int height, int x, int y, struct Stack *st) {
 	for (int j = 0; j < height; j++) {
 		int linep = (WIDTH * j);
 		for (int i = 0; i < width; i++) {
@@ -149,6 +149,10 @@ void print_prog_with_pointer(char* program, int width, int height, int x, int y)
 			}
 		}
 		dprintf("\n");
+	}
+	dprintf("\nstack:");
+	for (int i = 0; i <= st->pointer; i++) {
+		dprintf(" %d", st->arr[i]);
 	}
 	dprintf("\n");
 }
@@ -170,7 +174,9 @@ void run(struct Program* prog) {
 	while(1) {
 		char curr = *(program +  (y * WIDTH + x));
 #ifdef DEVEL
-		print_prog_with_pointer(program, width, height, x, y);
+		dprintf("\x1b[2J");
+		print_prog_with_pointer(program, width, height, x, y, stack);
+		getchar();
 #endif
 		if (string_mode) {
 			if (curr == '"') {
