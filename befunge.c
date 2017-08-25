@@ -8,6 +8,8 @@
 #define DEF_STACK_SIZE 1000
 #define WIDTH 80
 #define HEIGHT 25
+// PROG_SPACE = WIDTH * HEIGHT
+#define PROG_SPACE 2000
 
 #define binary_op(__op_char__, __op__) \
 case __op_char__: {\
@@ -37,7 +39,7 @@ struct Program {
 	char valid;
 	size_t width;
 	size_t height;
-	char* lines;
+	char lines[PROG_SPACE];
 };
 
 struct Stack {
@@ -91,10 +93,9 @@ struct Program* prog_from_file(char* filename) {
 	}
 	size_t bflines = 0;
 	size_t prog_size = WIDTH * HEIGHT;
-	char* prog = malloc(prog_size);
 	size_t max_len = 0;
 	while (1) {
-		char* linep = prog + bflines * WIDTH;
+		char* linep = program.lines + bflines * WIDTH;
 		int line_len = 0;
 		while (1) {
 			int curr = fgetc(file);
@@ -112,7 +113,6 @@ struct Program* prog_from_file(char* filename) {
 		}
 	}
 fileEnd:
-	program.lines = prog;
 	program.valid = 1;
 	program.width = max_len;
 	program.height = bflines;
@@ -286,7 +286,6 @@ int main(int argc, char *argv[]) {
 			run();
 			free(stack.arr);
 		}
-		free(program.lines);
 	}
 	return 0;
 }
