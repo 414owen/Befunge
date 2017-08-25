@@ -154,7 +154,7 @@ void run() {
 	while(1) {
 		char curr = *(program.lines + (y * WIDTH + x));
 #ifdef DEVEL
-		print_prog_with_pointer(program.lines, width, height, x, y);
+		print_prog_with_pointer(width, height, x, y);
 		fprintf(stderr, "\n(press <return> to continue) ");
 		while (getchar() != '\n') {}
 #endif
