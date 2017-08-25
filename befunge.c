@@ -281,7 +281,6 @@ int main(int argc, char *argv[]) {
 		prog_from_file(argv[1]);
 		if (program.valid) {
 			stack.arr = malloc(sizeof(STACK_TYPE) * DEF_STACK_SIZE);
-			printf("stack: %p\n", stack.arr);
 			stack.pointer = stack.arr - 1;
 			stack.size = DEF_STACK_SIZE;
 			run();
