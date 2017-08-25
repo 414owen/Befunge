@@ -47,6 +47,7 @@ struct Stack {
 };
 
 struct Stack stack;
+struct Program program;
 
 char empty_stack() {
 	return stack.pointer < stack.arr;
@@ -84,11 +85,9 @@ void push(int t) {
 // "Shut up I wanna" - me
 struct Program* prog_from_file(char* filename) {
 	FILE* file = fopen(filename, "r");
-	struct Program* program = malloc(sizeof(struct Program));
 	if (file == NULL) {
 		fprintf(stderr, "Couldn't open file. Did you get the path right?\n");
-		program->valid = 0;
-		return program;
+		program.valid = 0;
 	}
 	size_t bflines = 0;
 	size_t prog_size = WIDTH * HEIGHT;
@@ -113,15 +112,14 @@ struct Program* prog_from_file(char* filename) {
 		}
 	}
 fileEnd:
-	program->lines = prog;
-	program->valid = 1;
-	program->width = max_len;
-	program->height = bflines;
+	program.lines = prog;
+	program.valid = 1;
+	program.width = max_len;
+	program.height = bflines;
 	fclose(file);
-	return program;
 }
 
-void print_prog_with_pointer(char* program, int width, int height, int x, int y) {
+void print_prog_with_pointer(int width, int height, int x, int y) {
 	fprintf(stderr, "\x1b[2J");
 	for (int j = 0; j < height; j++) {
 		int linep = (WIDTH * j);
@@ -129,7 +127,7 @@ void print_prog_with_pointer(char* program, int width, int height, int x, int y)
 			if (y == j && x == i) {
 				fprintf(stderr, "\x1b[44mX\x1b[49m");
 			} else {
-				fprintf(stderr, "%c", *(program + (linep + i)));
+				fprintf(stderr, "%c", *(program.lines + (linep + i)));
 			}
 		}
 		fprintf(stderr, "\n");
@@ -145,19 +143,18 @@ void out_of_bounds(int x, int y) {
 	printf("Program limits are 80 x 25, tried to access %d x %d", x, y);
 }
 
-void run(struct Program* prog) {
-	int width = prog->width;
-	int height = prog->height;
-	char* program = prog->lines;
+void run() {
+	int width = program.width;
+	int height = program.height;
 	int x = 0;
 	int y = 0;
 	int dx = 1;
 	int dy = 0;
 	char string_mode = 0;
 	while(1) {
-		char curr = *(program + (y * WIDTH + x));
+		char curr = *(program.lines + (y * WIDTH + x));
 #ifdef DEVEL
-		print_prog_with_pointer(program, width, height, x, y);
+		print_prog_with_pointer(program.lines, width, height, x, y);
 		fprintf(stderr, "\n(press <return> to continue) ");
 		while (getchar() != '\n') {}
 #endif
@@ -239,7 +236,7 @@ void run(struct Program* prog) {
 							out_of_bounds(xx, yy);
 						if (width < xx) width = xx;
 						if (height < yy) height = yy;
-						*(program +	(yy * WIDTH + xx)) = v;
+						*(program.lines +	(yy * WIDTH + xx)) = v;
 						break;
 					}
 					case 'g': {
@@ -247,7 +244,7 @@ void run(struct Program* prog) {
 						STACK_TYPE xx = pop();
 						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 							out_of_bounds(xx, yy);
-						push((unsigned char) *(program + (yy * WIDTH + xx)));
+						push((unsigned char) *(program.lines + (yy * WIDTH + xx)));
 						break;
 					}
 					case '&': {
@@ -262,7 +259,6 @@ void run(struct Program* prog) {
 						break;
 					}
 					case '@': {
-						free(stack.arr);
 						return;
 					}
 				}
@@ -282,16 +278,16 @@ int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		usage(argv[0]);
 	} else {
-		struct Program* program = prog_from_file(argv[1]);
-		if (program->valid) {
+		prog_from_file(argv[1]);
+		if (program.valid) {
 			stack.arr = malloc(sizeof(STACK_TYPE) * DEF_STACK_SIZE);
 			printf("stack: %p\n", stack.arr);
 			stack.pointer = stack.arr - 1;
 			stack.size = DEF_STACK_SIZE;
-			run(program);
+			run();
+			free(stack.arr);
 		}
-		free(program->lines);
-		free(program);
+		free(program.lines);
 	}
 	return 0;
 }
