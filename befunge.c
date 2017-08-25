@@ -3,16 +3,17 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define STACK_TYPE int
+#define STACK_TYPE long
+#define STACK_FMT "%ld"
 #define DEF_STACK_SIZE 1000
 #define WIDTH 80
 #define HEIGHT 25
 
-#define binary_op(__op_char__, __op__, __stack__) \
+#define binary_op(__op_char__, __op__) \
 case __op_char__: {\
-	STACK_TYPE __a__ = pop(__stack__);\
-	STACK_TYPE __b__ = pop(__stack__);\
-	push(__stack__, __b__ __op__ __a__);\
+	STACK_TYPE __a__ = pop();\
+	STACK_TYPE __b__ = pop();\
+	push(__b__ __op__ __a__);\
 	break;\
 }
 
@@ -25,7 +26,7 @@ case __case__: {\
 
 #define if_case(__op__, __change__, __stop__)\
 case __op__: {\
-	STACK_TYPE a = pop(stack);\
+	STACK_TYPE a = pop();\
 	if (a) {__change__ = -1;} \
 	else {__change__ = 1;}\
 	__stop__ = 0;\
@@ -45,42 +46,38 @@ struct Stack {
 	int size;
 };
 
-char empty_stack(struct Stack* s) {
-	return s->pointer < s->arr;
+struct Stack stack;
+
+char empty_stack() {
+	return stack.pointer < stack.arr;
 }
 
-STACK_TYPE head_with_info(bool empty, struct Stack *s) {
+STACK_TYPE head_with_info(bool empty) {
 	if (empty) {return 0;}
-	return *(s->pointer);
+	return *(stack.pointer);
 }
 
 // return head of list
-STACK_TYPE head(struct Stack *s) {
-	return head_with_info(empty_stack(s), s);
+STACK_TYPE head() {
+	return head_with_info(empty_stack());
 }
 
-STACK_TYPE pop(struct Stack* s) {
-	bool empty = empty_stack(s);
-	STACK_TYPE res = head_with_info(empty, s);
-	if (!empty) {s->pointer--;}
+STACK_TYPE pop() {
+	bool empty = empty_stack();
+	STACK_TYPE res = head_with_info(empty);
+	if (!empty) {stack.pointer--;}
 	return res;
 }
 
 // Add element to head of list
-void push(struct Stack *s, int t) {
-	if (s->pointer - s->arr + 1 == s->size) {
-		s->size *= 2;
-		s->arr = realloc(s->arr, sizeof(STACK_TYPE) * s->size);
+void push(int t) {
+	if (stack.pointer - stack.arr + 1 == stack.size) {
+		stack.size *= 2;
+		STACK_TYPE* old_p = stack.arr;
+		stack.arr = realloc(old_p, sizeof(STACK_TYPE) * stack.size);
+		stack.pointer = (stack.pointer - old_p) + stack.arr;
 	}
-	*(++(s->pointer)) = t;
-}
-
-struct Stack* new_stack() {
-	struct Stack *result = malloc(sizeof(struct Stack));
-	result->arr = malloc(sizeof(STACK_TYPE) * DEF_STACK_SIZE);
-	result->pointer = result->arr - 1;
-	result->size = DEF_STACK_SIZE;
-	return result;
+	*(++(stack.pointer)) = t;
 }
 
 // "Classic Premature Optimisation" - Brian Whelan (BAmod pending)
@@ -94,7 +91,6 @@ struct Program* prog_from_file(char* filename) {
 		return program;
 	}
 	size_t bflines = 0;
-	size_t line_buf = 100;
 	size_t prog_size = WIDTH * HEIGHT;
 	char* prog = malloc(prog_size);
 	size_t max_len = 0;
@@ -125,7 +121,7 @@ fileEnd:
 	return program;
 }
 
-void print_prog_with_pointer(char* program, int width, int height, int x, int y, struct Stack *s) {
+void print_prog_with_pointer(char* program, int width, int height, int x, int y) {
 	fprintf(stderr, "\x1b[2J");
 	for (int j = 0; j < height; j++) {
 		int linep = (WIDTH * j);
@@ -139,8 +135,8 @@ void print_prog_with_pointer(char* program, int width, int height, int x, int y,
 		fprintf(stderr, "\n");
 	}
 	fprintf(stderr, "\n\x1b[34mStack: \x1b[39m");
-	for (STACK_TYPE* p = s->arr; p <= s->pointer; p++) {
-		fprintf(stderr, " %d", *p);
+	for (STACK_TYPE* p = stack.arr; p <= stack.pointer; p++) {
+		fprintf(stderr, " " STACK_FMT, *p);
 	}
 	fprintf(stderr, "\n");
 }
@@ -157,12 +153,11 @@ void run(struct Program* prog) {
 	int y = 0;
 	int dx = 1;
 	int dy = 0;
-	struct Stack* stack = new_stack();
 	char string_mode = 0;
 	while(1) {
 		char curr = *(program + (y * WIDTH + x));
 #ifdef DEVEL
-		print_prog_with_pointer(program, width, height, x, y, stack);
+		print_prog_with_pointer(program, width, height, x, y);
 		fprintf(stderr, "\n(press <return> to continue) ");
 		while (getchar() != '\n') {}
 #endif
@@ -170,22 +165,22 @@ void run(struct Program* prog) {
 			if (curr == '"') {
 				string_mode = 0;
 			} else {
-				push(stack, curr);
+				push(curr);
 			}
 		} else {
 			if (curr >= '0' && curr <= '9') {
-				push(stack, curr - '0');
+				push(curr - '0');
 			} else {
 				switch(curr) {
-					binary_op('+', +, stack)
-					binary_op('-', -, stack)
-					binary_op('*', *, stack)
-					binary_op('/', /, stack)
-					binary_op('%', %, stack)
-					binary_op('`', >, stack)
+					binary_op('+', +)
+					binary_op('-', -)
+					binary_op('*', *)
+					binary_op('/', /)
+					binary_op('%', %)
+					binary_op('`', >)
 					case '!': {
-						STACK_TYPE a = pop(stack);
-						push(stack, a == 0);
+						STACK_TYPE a = pop();
+						push(a == 0);
 						break;
 					}
 					direction_case('<', -1, 0)
@@ -209,26 +204,26 @@ void run(struct Program* prog) {
 						break;
 					}
 					case ':': {
-						push(stack, head(stack));
+						push(head());
 						break;
 					}
 					case '\\': {
-						 STACK_TYPE a = pop(stack);
-						 STACK_TYPE b = pop(stack);
-						 push(stack, a);
-						 push(stack, b);
+						 STACK_TYPE a = pop();
+						 STACK_TYPE b = pop();
+						 push(a);
+						 push(b);
 						 break;
 					 }
 					case '$': {
-						pop(stack);
+						pop();
 						break;
 					}
 					case '.': {
-						printf("%d ", pop(stack));
+						printf(STACK_FMT " ", pop());
 						break;
 					}
 					case ',': {
-						putchar(pop(stack));
+						putchar(pop());
 						break;
 					}
 					case '#': {
@@ -237,9 +232,9 @@ void run(struct Program* prog) {
 						break;
 					}
 					case 'p': {
-						STACK_TYPE yy = pop(stack);
-						STACK_TYPE xx = pop(stack);
-						STACK_TYPE v = pop(stack);
+						STACK_TYPE yy = pop();
+						STACK_TYPE xx = pop();
+						STACK_TYPE v = pop();
 						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 							out_of_bounds(xx, yy);
 						if (width < xx) width = xx;
@@ -248,27 +243,26 @@ void run(struct Program* prog) {
 						break;
 					}
 					case 'g': {
-						STACK_TYPE yy = pop(stack);
-						STACK_TYPE xx = pop(stack);
+						STACK_TYPE yy = pop();
+						STACK_TYPE xx = pop();
 						if (xx >= WIDTH || xx < 0 || yy >= HEIGHT || yy < 0)
 							out_of_bounds(xx, yy);
-						push(stack, (unsigned char) *(program + (yy * WIDTH + xx)));
+						push((unsigned char) *(program + (yy * WIDTH + xx)));
 						break;
 					}
 					case '&': {
-						int num;
-						scanf("%d", &num);
-						push(stack, num);
+						STACK_TYPE num;
+						scanf(STACK_FMT, &num);
+						push(num);
 						break;
 					}
 					case '~': {
 						int a = getchar();
-						push(stack, a);
+						push(a);
 						break;
 					}
 					case '@': {
-						free(stack->arr);
-						free(stack);
+						free(stack.arr);
 						return;
 					}
 				}
@@ -290,6 +284,10 @@ int main(int argc, char *argv[]) {
 	} else {
 		struct Program* program = prog_from_file(argv[1]);
 		if (program->valid) {
+			stack.arr = malloc(sizeof(STACK_TYPE) * DEF_STACK_SIZE);
+			printf("stack: %p\n", stack.arr);
+			stack.pointer = stack.arr - 1;
+			stack.size = DEF_STACK_SIZE;
 			run(program);
 		}
 		free(program->lines);
